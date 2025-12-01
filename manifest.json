@@ -1,6 +1,6 @@
 {
-  "name": "CycleTrack",
-  "short_name": "CycleTrack",
+  "name": "Aura - Cycle Tracking",
+  "short_name": "Aura",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f5f5f4",

@@ -1,4 +1,4 @@
-const CACHE_NAME = "cycle-track-v1";
+const CACHE_NAME = "aura-cycle-track-v1";
 const urlsToCache = [
   "./",
   "./index.html",
