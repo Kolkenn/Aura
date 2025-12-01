@@ -454,7 +454,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.3 - Stable";
+      const UI_VERSION = "v1.3.1 (Debug+)";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -512,7 +512,6 @@
           // Happy path: We are controlled
           const messageChannel = new MessageChannel();
           const timeout = setTimeout(() => {
-            // Fallback if controller is silent
             handleVersion(UI_VERSION + " (Timeout)");
           }, 1000);
           messageChannel.port1.onmessage = (event) => {
@@ -524,7 +523,9 @@
             [messageChannel.port2]
           );
         } else {
-          // Uncontrolled path: Try to talk to the active registration anyway
+          // Uncontrolled path: Show local version immediately, then try to get active SW
+          handleVersion(UI_VERSION + " (No Controller)");
+
           navigator.serviceWorker.ready.then((reg) => {
             if (reg.active) {
               const messageChannel = new MessageChannel();
@@ -533,8 +534,6 @@
               reg.active.postMessage({ type: "GET_VERSION" }, [
                 messageChannel.port2,
               ]);
-            } else {
-              handleVersion(UI_VERSION + " (No SW)");
             }
           });
         }
@@ -542,38 +541,56 @@
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          navigator.serviceWorker.register("sw.js").then((reg) => {
-            document.getElementById("update-status-display").textContent =
-              "Checking...";
-
-            reg.update().then(() => {
-              if (!reg.waiting && !reg.installing) {
-                document.getElementById("update-status-display").textContent =
-                  "Up to date";
-              }
-            });
-
-            if (reg.waiting) handleUpdateReady(reg.waiting);
-
-            reg.addEventListener("updatefound", () => {
+          navigator.serviceWorker
+            .register("sw.js")
+            .then((reg) => {
               document.getElementById("update-status-display").textContent =
-                "Downloading...";
-              const installingWorker = reg.installing;
-              installingWorker.addEventListener("statechange", () => {
-                // FIX: Removed the '&& navigator.serviceWorker.controller' check
-                // This allows the toast to show even on the first 'Uncontrolled' load
-                if (installingWorker.state === "installed") {
-                  handleUpdateReady(installingWorker);
-                }
-                if (installingWorker.state === "redundant") {
+                "Checking...";
+
+              reg
+                .update()
+                .then(() => {
+                  if (!reg.waiting && !reg.installing) {
+                    document.getElementById(
+                      "update-status-display"
+                    ).textContent = "Up to date";
+                  }
+                })
+                .catch((err) => {
+                  console.warn("Update check failed", err);
                   document.getElementById("update-status-display").textContent =
-                    "Update Failed";
-                }
+                    "Check Failed";
+                });
+
+              if (reg.waiting) handleUpdateReady(reg.waiting);
+
+              reg.addEventListener("updatefound", () => {
+                document.getElementById("update-status-display").textContent =
+                  "Downloading...";
+                const installingWorker = reg.installing;
+                installingWorker.addEventListener("statechange", () => {
+                  if (installingWorker.state === "installed") {
+                    handleUpdateReady(installingWorker);
+                  }
+                  if (installingWorker.state === "redundant") {
+                    document.getElementById(
+                      "update-status-display"
+                    ).textContent = "Update Failed (Redundant)";
+                    console.error("SW became redundant. Check urlsToCache.");
+                  }
+                });
               });
+
+              fetchVersion();
+            })
+            .catch((err) => {
+              // Registration Failed Catch Block
+              console.error("SW Reg Failed", err);
+              document.getElementById("update-status-display").textContent =
+                "Reg Failed";
+              fetchVersion(); // Try to show version anyway
             });
 
-            fetchVersion();
-          });
           navigator.serviceWorker.addEventListener("controllerchange", () => {
             window.location.reload();
           });
@@ -620,6 +637,7 @@
 
         init() {
           updateConnectionStatus();
+          // Set initial text
           document.getElementById("app-version-display").textContent =
             UI_VERSION + "...";
 
