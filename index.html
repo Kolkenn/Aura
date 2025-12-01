@@ -6,21 +6,13 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Aura - Cycle Tracker</title>
+    <title>CycleTrack MVP</title>
 
-    <!-- PWA: iOS Config (Hides Safari UI) -->
+    <!-- PWA Config -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <!-- Options: default, black, black-translucent -->
-    <meta name="apple-mobile-web-app-title" content="Aura- Cycle Tracker" />
-
-    <!-- PWA: Android/Chrome Config (Hides Chrome UI) -->
-    <meta name="theme-color" content="#ffffff" />
-    <!-- Embedded Manifest via Data URI to keep this a single file -->
-    <link
-      rel="manifest"
-      href='data:application/manifest+json,{"name":"Aura - Cycle Tracker MVP","short_name":"Aura","display":"standalone","start_url":".","background_color":"#f5f5f4","theme_color":"#ffffff","icons":[{"src":"https://api.iconify.design/noto:blossom.svg","sizes":"192x192","type":"image/svg+xml"}]}'
-    />
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,21 +20,17 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Google Fonts: Noto Sans for clean, modern readability -->
+    <!-- Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
 
-    <!-- Chosen Palette: Serene Rose - Warm neutrals (Stone) mixed with soft Rose for the primary action color. 
-         Designed to be calming and private. Background is always light/warm white. -->
     <script>
       tailwind.config = {
         theme: {
           extend: {
-            fontFamily: {
-              sans: ["Noto Sans", "sans-serif"],
-            },
+            fontFamily: { sans: ["Noto Sans", "sans-serif"] },
             colors: {
               brand: {
                 50: "#fff1f2",
@@ -50,16 +38,16 @@
                 200: "#fecdd3",
                 300: "#fda4af",
                 400: "#fb7185",
-                500: "#f43f5e", // Primary Action
+                500: "#f43f5e",
                 600: "#e11d48",
                 900: "#881337",
               },
               neutral: {
                 50: "#fafaf9",
-                100: "#f5f5f4", // Main BG
+                100: "#f5f5f4",
                 200: "#e7e5e4",
                 500: "#78716c",
-                800: "#292524", // Text
+                800: "#292524",
               },
             },
           },
@@ -68,20 +56,16 @@
     </script>
 
     <style>
-      /* Base Reset */
       body {
-        background-color: #f5f5f4; /* neutral-100 */
-        color: #292524; /* neutral-800 */
+        background-color: #f5f5f4;
+        color: #292524;
         -webkit-tap-highlight-color: transparent;
       }
-
-      /* Chart Container Styling - Mandatory Requirement */
       .chart-container {
         position: relative;
         width: 100%;
-        max-width: 600px; /* max-w-xl equivalent */
-        margin-left: auto;
-        margin-right: auto;
+        max-width: 600px;
+        margin: 0 auto;
         height: 300px;
         max-height: 400px;
       }
@@ -90,8 +74,6 @@
           height: 350px;
         }
       }
-
-      /* Utility */
       .no-scrollbar::-webkit-scrollbar {
         display: none;
       }
@@ -99,33 +81,7 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
-
-      /* Smooth transitions for interactive elements */
-      .interactive-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-      }
-      .interactive-card:active {
-        transform: scale(0.98);
-      }
     </style>
-
-    <!-- Application Structure Plan: 
-         The app is structured as a Single Page App (SPA) with a fixed bottom navigation, mimicking a native mobile experience.
-         
-         1. **Views**: 
-            - "Prototype": The actual functional calendar and logging tool (Must Haves).
-            - "Blueprint": An interactive breakdown of the Specification (Architecture, Roadmap, Scope).
-            - "Data & Settings": Management of LocalStorage and Import/Export (Should Haves).
-         
-         2. **Flow**: 
-            - Users land on the "Prototype" to immediately test the core value.
-            - "Log Data" is a modal overlay for focus.
-            - "Blueprint" allows the developer (you) to review the requirements against the built features.
-         
-         3. **Why this structure**: 
-            - It serves the dual purpose of being a useful tool for your wife AND a reference document for you.
-            - Mobile-first bottom nav is standard for this domain (easy thumb access).
-    -->
   </head>
   <body class="font-sans antialiased h-screen flex flex-col overflow-hidden">
     <!-- Header -->
@@ -135,41 +91,35 @@
       <div class="flex items-center gap-2">
         <span class="text-2xl">🌸</span>
         <h1 class="text-lg font-bold text-neutral-800 tracking-tight">
-          Aura - Cycle Tracker
-          <span
-            class="text-xs font-normal text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full"
-            >MVP</span
-          >
+          CycleTrack
         </h1>
       </div>
-      <div
-        id="status-indicator"
-        class="text-xs font-medium text-brand-600 bg-brand-50 px-3 py-1 rounded-full"
-      >
-        Loading...
+
+      <div class="flex items-center gap-2">
+        <!-- Install Button (Hidden by default, shown via JS) -->
+        <button
+          id="install-btn"
+          class="hidden text-xs font-bold text-white bg-brand-500 px-3 py-1.5 rounded-full shadow-sm hover:bg-brand-600 transition-colors flex items-center gap-1"
+        >
+          <span>⬇</span> Install
+        </button>
+
+        <div
+          id="status-indicator"
+          class="text-xs font-medium text-brand-600 bg-brand-50 px-3 py-1 rounded-full"
+        >
+          Loading...
+        </div>
       </div>
     </header>
 
-    <!-- Main Content Area (Scrollable) -->
+    <!-- Main Content Area -->
     <main
       id="main-container"
       class="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24 relative scroll-smooth"
     >
-      <!-- VIEW 1: PROTOTYPE (The Functional App) -->
+      <!-- VIEW 1: PROTOTYPE -->
       <div id="view-prototype" class="space-y-6">
-        <!-- Intro Paragraph for Prototype -->
-        <div
-          class="bg-white p-4 rounded-xl shadow-sm border border-neutral-100"
-        >
-          <p class="text-sm text-neutral-600 leading-relaxed">
-            <strong>Live MVP Demo:</strong> This section implements the "Must
-            Have" requirements from Section 3 of the specification. It uses
-            <code>localStorage</code> for persistence and basic algorithms for
-            prediction. Tap any date to log flow, mood, or symptoms.
-          </p>
-        </div>
-
-        <!-- Calendar Component -->
         <div class="bg-white rounded-2xl shadow-sm p-4">
           <div class="flex justify-between items-center mb-4">
             <button
@@ -192,7 +142,6 @@
             </button>
           </div>
 
-          <!-- Day Names -->
           <div class="grid grid-cols-7 gap-1 mb-2 text-center">
             <div class="text-xs font-medium text-neutral-400">S</div>
             <div class="text-xs font-medium text-neutral-400">M</div>
@@ -203,10 +152,7 @@
             <div class="text-xs font-medium text-neutral-400">S</div>
           </div>
 
-          <!-- Calendar Grid -->
-          <div id="calendar-grid" class="grid grid-cols-7 gap-1">
-            <!-- Javascript will populate this -->
-          </div>
+          <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
 
           <div class="mt-4 flex gap-4 justify-center text-xs text-neutral-500">
             <div class="flex items-center gap-1">
@@ -224,174 +170,43 @@
           </div>
         </div>
 
-        <!-- Stats / Quick Insights -->
         <div class="bg-white rounded-2xl shadow-sm p-5">
           <h3
             class="font-semibold text-neutral-800 mb-4 flex items-center gap-2"
           >
             <span>📊</span> Cycle Trends
           </h3>
-          <div class="chart-container">
-            <canvas id="cycleChart"></canvas>
-          </div>
+          <div class="chart-container"><canvas id="cycleChart"></canvas></div>
           <p class="text-xs text-center text-neutral-400 mt-2">
             Based on last 6 months of data
           </p>
         </div>
-
-        <!-- Visualization & Content Choices:
-                 1. Calendar Grid: HTML Grid. Chosen for accessibility and ease of interaction (click targets) over a Canvas chart.
-                 2. Cycle Trends: Chart.js Bar Chart. Chosen to satisfy the "Analyze Source Report" need for visualizations. It shows Cycle Length variation.
-                 3. Status Pill: Dynamic text in header. Immediate context for the user.
-                 4. Interactions: Modal for logging prevents navigating away, keeping the context of the calendar visible.
-            -->
       </div>
 
-      <!-- VIEW 2: BLUEPRINT (The Specification) -->
+      <!-- VIEW 2: BLUEPRINT -->
       <div id="view-blueprint" class="hidden space-y-6">
         <div class="bg-brand-50 border border-brand-100 p-4 rounded-xl">
-          <h2 class="text-lg font-bold text-brand-900 mb-2">
-            Project Specification Review
-          </h2>
+          <h2 class="text-lg font-bold text-brand-900 mb-2">PWA Status</h2>
           <p class="text-sm text-brand-800 leading-relaxed">
-            This view outlines the technical architecture and scope defined in
-            the source document. It serves as a guide for development and
-            feature verification.
+            This app is now configured for Android installation. If you see the
+            "Install" button in the header, tap it to add to home screen. This
+            removes the browser bar.
           </p>
         </div>
-
-        <!-- Architecture Cards -->
-        <section>
-          <h3
-            class="text-sm uppercase tracking-wide text-neutral-500 font-bold mb-3"
-          >
-            Architecture & Tech Stack
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div
-              class="bg-white p-4 rounded-xl border border-neutral-100 shadow-sm"
-            >
-              <div class="text-2xl mb-2">📱</div>
-              <h4 class="font-bold text-neutral-800">Local-First PWA</h4>
-              <p class="text-xs text-neutral-500 mt-1">
-                Privacy-centric. No servers. Data lives in `localStorage`.
-                Offline capable via Service Worker.
-              </p>
-            </div>
-            <div
-              class="bg-white p-4 rounded-xl border border-neutral-100 shadow-sm"
-            >
-              <div class="text-2xl mb-2">⚡</div>
-              <h4 class="font-bold text-neutral-800">Tech Choice</h4>
-              <p class="text-xs text-neutral-500 mt-1">
-                HTML5 + Tailwind CSS + Vanilla JS. Lightweight and fast for MVP.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <!-- Scope (MoSCoW) Interactive List -->
-        <section>
-          <h3
-            class="text-sm uppercase tracking-wide text-neutral-500 font-bold mb-3"
-          >
-            Feature Scope (MoSCoW)
-          </h3>
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-neutral-100 bg-neutral-50">
-              <h4 class="font-bold text-neutral-800">
-                Must Have (The Skeleton)
-              </h4>
-            </div>
-            <ul class="divide-y divide-neutral-100 text-sm">
-              <li class="p-4 flex items-start gap-3">
-                <span class="text-green-500 mt-0.5">✔</span>
-                <div>
-                  <strong class="block text-neutral-800">Calendar View</strong>
-                  <span class="text-neutral-500"
-                    >Monthly view with visual indicators for Period and
-                    Predictions.</span
-                  >
-                </div>
-              </li>
-              <li class="p-4 flex items-start gap-3">
-                <span class="text-green-500 mt-0.5">✔</span>
-                <div>
-                  <strong class="block text-neutral-800">Daily Logging</strong>
-                  <span class="text-neutral-500"
-                    >Flow, Symptoms, and Mood tracking via modal.</span
-                  >
-                </div>
-              </li>
-              <li class="p-4 flex items-start gap-3">
-                <span class="text-green-500 mt-0.5">✔</span>
-                <div>
-                  <strong class="block text-neutral-800">Persistence</strong>
-                  <span class="text-neutral-500"
-                    >Immediate save to browser storage.</span
-                  >
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          <div class="mt-4 bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-neutral-100 bg-neutral-50">
-              <h4 class="font-bold text-neutral-800">Should Have & Future</h4>
-            </div>
-            <ul class="divide-y divide-neutral-100 text-sm">
-              <li class="p-4 flex items-start gap-3">
-                <span class="text-green-500 mt-0.5">✔</span>
-                <div>
-                  <strong class="block text-neutral-800">Data Backup</strong>
-                  <span class="text-neutral-500"
-                    >Export/Import JSON functionality (Implemented in
-                    Settings).</span
-                  >
-                </div>
-              </li>
-              <li class="p-4 flex items-start gap-3">
-                <span class="text-neutral-300 mt-0.5">○</span>
-                <div>
-                  <strong class="block text-neutral-400"
-                    >Cloud Sync (Future)</strong
-                  >
-                  <span class="text-neutral-400"
-                    >Firebase migration for multi-device support.</span
-                  >
-                </div>
-              </li>
-            </ul>
-          </div>
-        </section>
       </div>
 
-      <!-- VIEW 3: SETTINGS (Data Management) -->
+      <!-- VIEW 3: SETTINGS -->
       <div id="view-settings" class="hidden space-y-6">
-        <div
-          class="bg-white p-4 rounded-xl shadow-sm border border-neutral-100"
-        >
-          <p class="text-sm text-neutral-600 leading-relaxed">
-            <strong>Data Control:</strong> As a Local-First application, your
-            data resides entirely on this device. Use the tools below to backup
-            or transfer your history.
-          </p>
-        </div>
-
-        <!-- Data Actions -->
         <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
           <h3 class="font-bold text-neutral-800 mb-2">Data Management</h3>
-
           <button
             onclick="app.exportData()"
             class="w-full flex items-center justify-between p-3 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg transition-colors"
           >
             <span class="flex items-center gap-2"
               ><span>📥</span> Export Backup (JSON)</span
-            >
-            <span class="text-lg">›</span>
+            ><span class="text-lg">›</span>
           </button>
-
           <div class="relative w-full">
             <input
               type="file"
@@ -406,13 +221,10 @@
             >
               <span class="flex items-center gap-2"
                 ><span>📤</span> Import Backup</span
-              >
-              <span class="text-lg">›</span>
+              ><span class="text-lg">›</span>
             </button>
           </div>
-
           <hr class="border-neutral-100" />
-
           <button
             onclick="app.clearData()"
             class="w-full flex items-center justify-between p-3 bg-white border border-red-100 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
@@ -422,8 +234,6 @@
             >
           </button>
         </div>
-
-        <!-- Debug View (JSON) -->
         <div class="bg-neutral-800 rounded-xl shadow-sm p-4">
           <h3
             class="font-bold text-neutral-200 mb-2 text-xs uppercase tracking-wider"
@@ -433,14 +243,12 @@
           <pre
             id="json-viewer"
             class="text-xs text-green-400 font-mono overflow-x-auto p-2 bg-neutral-900 rounded-lg"
-          >
-                    <!-- Data dump here -->
-                </pre>
+          ></pre>
         </div>
       </div>
     </main>
 
-    <!-- Logging Modal (Hidden by default) -->
+    <!-- Logging Modal -->
     <div
       id="log-modal"
       class="fixed inset-0 bg-neutral-900/50 z-50 hidden flex items-end sm:items-center sm:justify-center backdrop-blur-sm transition-opacity opacity-0 pointer-events-none"
@@ -460,10 +268,7 @@
             ✕
           </button>
         </div>
-
-        <!-- Form -->
         <div class="space-y-6">
-          <!-- Flow -->
           <div class="space-y-2">
             <label
               class="text-xs font-bold text-neutral-500 uppercase tracking-wide"
@@ -471,37 +276,31 @@
             >
             <div class="grid grid-cols-4 gap-2">
               <button
-                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
+                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
                 data-value="spotting"
               >
-                <span class="block text-lg mb-1">💧</span>
-                Spot
+                <span class="block text-lg mb-1">💧</span>Spot
               </button>
               <button
-                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
+                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
                 data-value="light"
               >
-                <span class="block text-lg mb-1">💧💧</span>
-                Light
+                <span class="block text-lg mb-1">💧💧</span>Light
               </button>
               <button
-                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
+                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
                 data-value="medium"
               >
-                <span class="block text-lg mb-1">🩸</span>
-                Med
+                <span class="block text-lg mb-1">🩸</span>Med
               </button>
               <button
-                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
+                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
                 data-value="heavy"
               >
-                <span class="block text-lg mb-1">🌊</span>
-                Heavy
+                <span class="block text-lg mb-1">🌊</span>Heavy
               </button>
             </div>
           </div>
-
-          <!-- Mood -->
           <div class="space-y-2">
             <label
               class="text-xs font-bold text-neutral-500 uppercase tracking-wide"
@@ -509,53 +308,47 @@
             >
             <div class="flex justify-between bg-neutral-50 p-2 rounded-xl">
               <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white transition-colors opacity-50 hover:opacity-100 focus:opacity-100"
+                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
                 data-value="happy"
               >
                 😊
               </button>
               <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white transition-colors opacity-50 hover:opacity-100 focus:opacity-100"
+                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
                 data-value="neutral"
               >
                 😐
               </button>
               <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white transition-colors opacity-50 hover:opacity-100 focus:opacity-100"
+                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
                 data-value="sad"
               >
                 😢
               </button>
               <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white transition-colors opacity-50 hover:opacity-100 focus:opacity-100"
+                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
                 data-value="irritable"
               >
                 😠
               </button>
               <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white transition-colors opacity-50 hover:opacity-100 focus:opacity-100"
+                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
                 data-value="tired"
               >
                 😴
               </button>
             </div>
           </div>
-
-          <!-- Symptoms -->
           <div class="space-y-2">
             <label
               class="text-xs font-bold text-neutral-500 uppercase tracking-wide"
               >Symptoms</label
             >
-            <div class="flex flex-wrap gap-2" id="symptom-chips">
-              <!-- JS generated -->
-            </div>
+            <div class="flex flex-wrap gap-2" id="symptom-chips"></div>
           </div>
-
-          <!-- Save Action -->
           <button
             onclick="app.saveEntry()"
-            class="w-full py-3 bg-brand-500 text-white rounded-xl font-bold shadow-md active:scale-95 transition-transform"
+            class="w-full py-3 bg-brand-500 text-white rounded-xl font-bold shadow-md"
           >
             Save Entry
           </button>
@@ -578,30 +371,59 @@
           class="nav-btn active flex flex-col items-center justify-center w-full h-full text-brand-500"
           data-target="view-prototype"
         >
-          <span class="text-2xl mb-0.5">📅</span>
-          <span class="text-[10px] font-medium">Tracker</span>
+          <span class="text-2xl mb-0.5">📅</span
+          ><span class="text-[10px] font-medium">Tracker</span>
         </button>
         <button
-          class="nav-btn flex flex-col items-center justify-center w-full h-full text-neutral-400 hover:text-neutral-600 transition-colors"
+          class="nav-btn flex flex-col items-center justify-center w-full h-full text-neutral-400"
           data-target="view-blueprint"
         >
-          <span class="text-2xl mb-0.5">📋</span>
-          <span class="text-[10px] font-medium">Spec</span>
+          <span class="text-2xl mb-0.5">📋</span
+          ><span class="text-[10px] font-medium">Status</span>
         </button>
         <button
-          class="nav-btn flex flex-col items-center justify-center w-full h-full text-neutral-400 hover:text-neutral-600 transition-colors"
+          class="nav-btn flex flex-col items-center justify-center w-full h-full text-neutral-400"
           data-target="view-settings"
         >
-          <span class="text-2xl mb-0.5">⚙️</span>
-          <span class="text-[10px] font-medium">Data</span>
+          <span class="text-2xl mb-0.5">⚙️</span
+          ><span class="text-[10px] font-medium">Data</span>
         </button>
       </div>
     </nav>
 
-    <!-- Logic -->
     <script>
-      // --- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. ---
+      // PWA INSTALL LOGIC
+      let deferredPrompt;
+      const installBtn = document.getElementById("install-btn");
 
+      // 1. Listen for the browser install event
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Show the install button
+        installBtn.classList.remove("hidden");
+      });
+
+      // 2. Handle click
+      installBtn.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installBtn.classList.add("hidden");
+      });
+
+      // 3. Register Service Worker (REQUIRED for Android Install)
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("sw.js")
+            .then((reg) => console.log("SW registered"))
+            .catch((err) => console.log("SW failed", err));
+        });
+      }
+
+      // APP LOGIC
       const app = {
         data: {
           userSettings: {
@@ -615,34 +437,29 @@
               "Backache",
             ],
           },
-          entries: {}, // Format: "YYYY-MM-DD": { flow: 'medium', mood: 'happy', symptoms: [] }
+          entries: {},
         },
         state: {
-          currentDate: new Date(), // For calendar navigation
-          selectedDateStr: null, // For modal
+          currentDate: new Date(),
+          selectedDateStr: null,
           view: "view-prototype",
         },
         chartInstance: null,
 
         init() {
-          // Load from LocalStorage
           const saved = localStorage.getItem("cycle_tracker_mvp_data");
-          if (saved) {
+          if (saved)
             try {
               this.data = JSON.parse(saved);
-            } catch (e) {
-              console.error("Data load error", e);
-            }
-          }
+            } catch (e) {}
 
-          // Setup Nav Listeners
-          document.querySelectorAll(".nav-btn").forEach((btn) => {
-            btn.addEventListener("click", (e) => {
-              this.switchView(e.currentTarget.dataset.target, e.currentTarget);
-            });
-          });
-
-          // Setup Calendar Nav
+          document
+            .querySelectorAll(".nav-btn")
+            .forEach((btn) =>
+              btn.addEventListener("click", (e) =>
+                this.switchView(e.currentTarget.dataset.target, e.currentTarget)
+              )
+            );
           document
             .getElementById("prev-month")
             .addEventListener("click", () => {
@@ -660,34 +477,24 @@
               this.renderCalendar();
             });
 
-          // Setup Symptom Chips
           this.renderSymptomChips();
-
-          // Initial Render
+          this.setupFlowListeners();
           this.renderCalendar();
           this.updateStats();
           this.renderJSONViewer();
         },
 
-        switchView(viewId, btnElement) {
-          // Hide all views
-          ["view-prototype", "view-blueprint", "view-settings"].forEach(
-            (id) => {
-              document.getElementById(id).classList.add("hidden");
-            }
+        switchView(viewId, btn) {
+          ["view-prototype", "view-blueprint", "view-settings"].forEach((id) =>
+            document.getElementById(id).classList.add("hidden")
           );
-          // Show target
           document.getElementById(viewId).classList.remove("hidden");
-
-          // Update Nav UI
           document.querySelectorAll(".nav-btn").forEach((b) => {
             b.classList.remove("text-brand-500");
             b.classList.add("text-neutral-400");
           });
-          btnElement.classList.remove("text-neutral-400");
-          btnElement.classList.add("text-brand-500");
-
-          this.state.view = viewId;
+          btn.classList.remove("text-neutral-400");
+          btn.classList.add("text-brand-500");
           if (viewId === "view-settings") this.renderJSONViewer();
           if (viewId === "view-prototype") this.updateStats();
         },
@@ -700,16 +507,11 @@
           this.renderJSONViewer();
         },
 
-        // --- Calendar Logic ---
-
         renderCalendar() {
           const grid = document.getElementById("calendar-grid");
           grid.innerHTML = "";
-
           const year = this.state.currentDate.getFullYear();
           const month = this.state.currentDate.getMonth();
-
-          // Update Label
           const monthNames = [
             "January",
             "February",
@@ -727,22 +529,13 @@
           document.getElementById(
             "current-month-label"
           ).textContent = `${monthNames[month]} ${year}`;
-
-          // Calculate geometry
-          const firstDay = new Date(year, month, 1).getDay(); // 0 = Sunday
+          const firstDay = new Date(year, month, 1).getDay();
           const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-          // Predictions
           const predictions = this.calculatePredictions();
-
-          // Empty slots for start
-          for (let i = 0; i < firstDay; i++) {
-            const empty = document.createElement("div");
-            grid.appendChild(empty);
-          }
-
-          // Days
           const todayStr = new Date().toISOString().split("T")[0];
+
+          for (let i = 0; i < firstDay; i++)
+            grid.appendChild(document.createElement("div"));
 
           for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${year}-${String(month + 1).padStart(
@@ -751,7 +544,6 @@
             )}-${String(d).padStart(2, "0")}`;
             const entry = this.data.entries[dateStr];
             const isToday = dateStr === todayStr;
-
             const dayEl = document.createElement("div");
             dayEl.className = `aspect-square rounded-full flex flex-col items-center justify-center text-sm cursor-pointer relative hover:bg-neutral-100 transition-colors ${
               isToday
@@ -759,14 +551,8 @@
                 : ""
             }`;
             dayEl.onclick = () => this.openLog(dateStr);
+            dayEl.innerHTML = `<span class="z-10">${d}</span>`;
 
-            // Day Number
-            const numSpan = document.createElement("span");
-            numSpan.textContent = d;
-            numSpan.className = "z-10";
-            dayEl.appendChild(numSpan);
-
-            // Indicators
             if (entry && entry.flow) {
               dayEl.classList.add(
                 "bg-brand-500",
@@ -774,7 +560,7 @@
                 "hover:bg-brand-600"
               );
               if (isToday)
-                dayEl.classList.remove("bg-neutral-100", "text-neutral-800"); // Override today style if logged
+                dayEl.classList.remove("bg-neutral-100", "text-neutral-800");
             } else if (predictions.includes(dateStr)) {
               dayEl.classList.add(
                 "bg-brand-50",
@@ -784,80 +570,53 @@
                 "border-dashed"
               );
             }
-
-            // Mood Dot
-            if (entry && entry.mood) {
-              const dot = document.createElement("span");
-              dot.className =
-                "absolute bottom-1 w-1 h-1 rounded-full bg-yellow-400";
-              dayEl.appendChild(dot);
-            }
-
+            if (entry && entry.mood)
+              dayEl.innerHTML += `<span class="absolute bottom-1 w-1 h-1 rounded-full bg-yellow-400"></span>`;
             grid.appendChild(dayEl);
           }
         },
 
-        // --- Prediction Engine (Section 3 Must Have) ---
         calculatePredictions() {
-          // Find all cycle start dates
           const dates = Object.keys(this.data.entries).sort();
           const starts = [];
           let lastDate = null;
-
           dates.forEach((d) => {
             const entry = this.data.entries[d];
             if (!entry.flow) return;
-
             const dateObj = new Date(d);
-            // Determine if this is a new cycle start (gap > 10 days from last log)
-            if (
-              !lastDate ||
-              (dateObj - lastDate) / (1000 * 60 * 60 * 24) > 10
-            ) {
+            if (!lastDate || (dateObj - lastDate) / (1000 * 60 * 60 * 24) > 10)
               starts.push(d);
-            }
             lastDate = dateObj;
           });
-
           if (starts.length === 0) return [];
 
-          // Calculate Average Cycle Length
-          let totalDiff = 0;
-          let count = 0;
+          let totalDiff = 0,
+            count = 0;
           if (starts.length >= 2) {
             for (let i = 1; i < starts.length; i++) {
               const diff =
                 (new Date(starts[i]) - new Date(starts[i - 1])) /
                 (1000 * 60 * 60 * 24);
               if (diff < 40 && diff > 20) {
-                // Sanity check
                 totalDiff += diff;
                 count++;
               }
             }
           }
-
           const avg =
             count > 0
               ? Math.round(totalDiff / count)
               : this.data.userSettings.averageCycleLength;
-
-          // Predict next 3 months
           const lastStart = new Date(starts[starts.length - 1]);
-          const predictionDates = [];
-
-          // Next cycle start
           const nextStart = new Date(lastStart);
           nextStart.setDate(lastStart.getDate() + avg);
-
-          // Add 5 days of prediction
+          const predictionDates = [];
           for (let i = 0; i < 5; i++) {
             const pDate = new Date(nextStart);
             pDate.setDate(nextStart.getDate() + i);
             predictionDates.push(pDate.toISOString().split("T")[0]);
           }
 
-          // Header status update
           const daysUntil = Math.ceil(
             (nextStart - new Date()) / (1000 * 60 * 60 * 24)
           );
@@ -867,23 +626,17 @@
           else if (daysUntil > -7 && daysUntil <= 0)
             statusEl.textContent = "Period likely now";
           else statusEl.textContent = "Log to see predictions";
-
           return predictionDates;
         },
-
-        // --- Modal Logic ---
 
         openLog(dateStr) {
           this.state.selectedDateStr = dateStr;
           const modal = document.getElementById("log-modal");
           const entry = this.data.entries[dateStr] || {};
-
-          // UI Reset
           document.getElementById("modal-date-label").textContent = new Date(
             dateStr
           ).toDateString();
 
-          // Select Flow
           document.querySelectorAll(".flow-btn").forEach((b) => {
             b.classList.remove(
               "ring-2",
@@ -891,17 +644,14 @@
               "border-brand-500",
               "bg-brand-50"
             );
-            if (b.dataset.value === entry.flow) {
+            if (b.dataset.value === entry.flow)
               b.classList.add(
                 "ring-2",
                 "ring-brand-500",
                 "border-brand-500",
                 "bg-brand-50"
               );
-            }
           });
-
-          // Select Mood
           document.querySelectorAll(".mood-btn").forEach((b) => {
             b.classList.remove("opacity-100", "bg-white", "shadow-sm");
             b.classList.add("opacity-50");
@@ -910,8 +660,6 @@
               b.classList.add("opacity-100", "bg-white", "shadow-sm");
             }
           });
-
-          // Select Symptoms
           document.querySelectorAll(".symptom-chip").forEach((c) => {
             c.classList.remove("bg-neutral-800", "text-white");
             c.classList.add("bg-neutral-100", "text-neutral-600");
@@ -920,8 +668,6 @@
               c.classList.add("bg-neutral-800", "text-white");
             }
           });
-
-          // Show
           modal.classList.remove("hidden", "pointer-events-none");
           setTimeout(() => modal.classList.remove("opacity-0"), 10);
         },
@@ -936,27 +682,22 @@
         },
 
         saveEntry() {
-          const flowBtn = document.querySelector(".flow-btn.ring-2");
-          const moodBtn = document.querySelector(".mood-btn.opacity-100");
-          const symptomChips = document.querySelectorAll(
-            ".symptom-chip.bg-neutral-800"
-          );
-
-          const symptoms = Array.from(symptomChips).map((c) => c.dataset.value);
-          const flow = flowBtn ? flowBtn.dataset.value : null;
-          const mood = moodBtn ? moodBtn.dataset.value : null;
-
-          if (!flow && !mood && symptoms.length === 0) {
-            // Empty entry, do nothing or delete
+          const flow =
+            document.querySelector(".flow-btn.ring-2")?.dataset.value || null;
+          const mood =
+            document.querySelector(".mood-btn.opacity-100")?.dataset.value ||
+            null;
+          const symptoms = Array.from(
+            document.querySelectorAll(".symptom-chip.bg-neutral-800")
+          ).map((c) => c.dataset.value);
+          if (!flow && !mood && symptoms.length === 0)
             delete this.data.entries[this.state.selectedDateStr];
-          } else {
+          else
             this.data.entries[this.state.selectedDateStr] = {
               flow,
               mood,
               symptoms,
             };
-          }
-
           this.saveData();
           this.closeModal();
           this.renderCalendar();
@@ -970,8 +711,6 @@
           this.renderCalendar();
           this.updateStats();
         },
-
-        // --- UI Helpers ---
 
         renderSymptomChips() {
           const container = document.getElementById("symptom-chips");
@@ -996,46 +735,41 @@
         },
 
         setupFlowListeners() {
-          document.querySelectorAll(".flow-btn").forEach((btn) => {
-            btn.onclick = () => {
-              document
-                .querySelectorAll(".flow-btn")
-                .forEach((b) =>
-                  b.classList.remove(
-                    "ring-2",
-                    "ring-brand-500",
-                    "border-brand-500",
-                    "bg-brand-50"
-                  )
-                );
-              if (btn.classList.contains("ring-2")) {
-                // toggle off? No, standard radio behavior usually
-              } else {
+          document.querySelectorAll(".flow-btn").forEach(
+            (btn) =>
+              (btn.onclick = () => {
+                document
+                  .querySelectorAll(".flow-btn")
+                  .forEach((b) =>
+                    b.classList.remove(
+                      "ring-2",
+                      "ring-brand-500",
+                      "border-brand-500",
+                      "bg-brand-50"
+                    )
+                  );
                 btn.classList.add(
                   "ring-2",
                   "ring-brand-500",
                   "border-brand-500",
                   "bg-brand-50"
                 );
-              }
-            };
-          });
-
-          document.querySelectorAll(".mood-btn").forEach((btn) => {
-            btn.onclick = () => {
-              document.querySelectorAll(".mood-btn").forEach((b) => {
-                b.classList.remove("opacity-100", "bg-white", "shadow-sm");
-                b.classList.add("opacity-50");
-              });
-              btn.classList.remove("opacity-50");
-              btn.classList.add("opacity-100", "bg-white", "shadow-sm");
-            };
-          });
+              })
+          );
+          document.querySelectorAll(".mood-btn").forEach(
+            (btn) =>
+              (btn.onclick = () => {
+                document.querySelectorAll(".mood-btn").forEach((b) => {
+                  b.classList.remove("opacity-100", "bg-white", "shadow-sm");
+                  b.classList.add("opacity-50");
+                });
+                btn.classList.remove("opacity-50");
+                btn.classList.add("opacity-100", "bg-white", "shadow-sm");
+              })
+          );
         },
 
-        // --- Analytics ---
         updateStats() {
-          // Calculate Cycle Lengths
           const dates = Object.keys(this.data.entries).sort();
           const starts = [];
           let lastDate = null;
@@ -1043,18 +777,12 @@
             const entry = this.data.entries[d];
             if (!entry.flow) return;
             const dateObj = new Date(d);
-            if (
-              !lastDate ||
-              (dateObj - lastDate) / (1000 * 60 * 60 * 24) > 10
-            ) {
+            if (!lastDate || (dateObj - lastDate) / (1000 * 60 * 60 * 24) > 10)
               starts.push(d);
-            }
             lastDate = dateObj;
           });
-
-          const lengths = [];
-          const labels = [];
-
+          const lengths = [],
+            labels = [];
           if (starts.length >= 2) {
             for (let i = 1; i < starts.length; i++) {
               const diff = Math.round(
@@ -1063,55 +791,24 @@
               );
               if (diff < 50) {
                 lengths.push(diff);
-                const m = new Date(starts[i - 1]).toLocaleString("default", {
-                  month: "short",
-                });
-                labels.push(m);
+                labels.push(
+                  new Date(starts[i - 1]).toLocaleString("default", {
+                    month: "short",
+                  })
+                );
               }
             }
           }
-
-          // Render Chart
           const ctx = document.getElementById("cycleChart").getContext("2d");
-
           if (this.chartInstance) this.chartInstance.destroy();
-
-          if (lengths.length === 0) {
-            // Placeholder data if empty
-            this.chartInstance = new Chart(ctx, {
-              type: "bar",
-              data: {
-                labels: ["No Data", "Log", "More", "Cycles"],
-                datasets: [
-                  {
-                    label: "Cycle Length (Days)",
-                    data: [28, 28, 28, 28],
-                    backgroundColor: "#e7e5e4",
-                    borderRadius: 4,
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                  y: { display: false },
-                  x: { grid: { display: false } },
-                },
-              },
-            });
-            return;
-          }
-
           this.chartInstance = new Chart(ctx, {
             type: "bar",
             data: {
-              labels: labels,
+              labels: lengths.length ? labels : ["No Data"],
               datasets: [
                 {
-                  label: "Cycle Length",
-                  data: lengths,
+                  label: "Days",
+                  data: lengths.length ? lengths : [28],
                   backgroundColor: "#fb7185",
                   borderRadius: 6,
                   maxBarThickness: 40,
@@ -1121,85 +818,57 @@
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: (ctx) => `${ctx.raw} Days`,
-                  },
-                },
-              },
+              plugins: { legend: { display: false } },
               scales: {
-                y: {
-                  beginAtZero: false,
-                  min: 20,
-                  grid: { color: "#f5f5f4" },
-                },
-                x: {
-                  grid: { display: false },
-                },
+                y: { display: false },
+                x: { grid: { display: false } },
               },
             },
           });
         },
 
-        // --- Data Management (Settings) ---
         renderJSONViewer() {
-          const viewer = document.getElementById("json-viewer");
-          viewer.textContent = JSON.stringify(this.data, null, 2);
+          document.getElementById("json-viewer").textContent = JSON.stringify(
+            this.data,
+            null,
+            2
+          );
         },
-
         exportData() {
           const dataStr =
             "data:text/json;charset=utf-8," +
             encodeURIComponent(JSON.stringify(this.data));
-          const downloadAnchorNode = document.createElement("a");
-          downloadAnchorNode.setAttribute("href", dataStr);
-          downloadAnchorNode.setAttribute(
-            "download",
-            "cycle_tracker_backup_" +
-              new Date().toISOString().split("T")[0] +
-              ".json"
-          );
-          document.body.appendChild(downloadAnchorNode);
-          downloadAnchorNode.click();
-          downloadAnchorNode.remove();
+          const a = document.createElement("a");
+          a.href = dataStr;
+          a.download = "backup.json";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
         },
-
         importData(input) {
           const file = input.files[0];
           if (!file) return;
           const reader = new FileReader();
           reader.onload = (e) => {
             try {
-              const json = JSON.parse(e.target.result);
-              if (json.entries) {
-                this.data = json;
-                this.saveData();
-                this.init(); // Re-init
-                alert("Data imported successfully!");
-              } else {
-                alert("Invalid file format.");
-              }
+              this.data = JSON.parse(e.target.result);
+              this.saveData();
+              this.init();
+              alert("Imported!");
             } catch (err) {
-              alert("Error parsing JSON.");
+              alert("Error");
             }
           };
           reader.readAsText(file);
         },
-
         clearData() {
-          if (confirm("Are you sure? This will delete all history.")) {
+          if (confirm("Delete all history?")) {
             this.data.entries = {};
             this.saveData();
             this.init();
           }
         },
       };
-
-      // Initialize listeners
-      app.setupFlowListeners();
-      // Start App
       app.init();
     </script>
   </body>
