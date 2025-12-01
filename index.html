@@ -253,7 +253,9 @@
       id="log-modal"
       class="fixed inset-0 bg-neutral-900/50 z-50 hidden flex items-end sm:items-center sm:justify-center backdrop-blur-sm transition-opacity opacity-0 pointer-events-none"
     >
+      <!-- Added ID 'modal-panel' here to target the slide animation -->
       <div
+        id="modal-panel"
         class="bg-white w-full sm:w-96 sm:rounded-2xl rounded-t-2xl shadow-2xl transform transition-transform translate-y-full sm:translate-y-0 p-5 max-h-[90vh] overflow-y-auto"
       >
         <div class="flex justify-between items-center mb-6">
@@ -395,16 +397,11 @@
       // PWA INSTALL LOGIC
       let deferredPrompt;
       const installBtn = document.getElementById("install-btn");
-
-      // 1. Listen for the browser install event
       window.addEventListener("beforeinstallprompt", (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        // Show the install button
         installBtn.classList.remove("hidden");
       });
-
-      // 2. Handle click
       installBtn.addEventListener("click", async () => {
         if (!deferredPrompt) return;
         deferredPrompt.prompt();
@@ -412,13 +409,10 @@
         deferredPrompt = null;
         installBtn.classList.add("hidden");
       });
-
-      // 3. Register Service Worker (REQUIRED for Android Install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker
             .register("sw.js")
-            .then((reg) => console.log("SW registered"))
             .catch((err) => console.log("SW failed", err));
         });
       }
@@ -589,7 +583,6 @@
             lastDate = dateObj;
           });
           if (starts.length === 0) return [];
-
           let totalDiff = 0,
             count = 0;
           if (starts.length >= 2) {
@@ -616,7 +609,6 @@
             pDate.setDate(nextStart.getDate() + i);
             predictionDates.push(pDate.toISOString().split("T")[0]);
           }
-
           const daysUntil = Math.ceil(
             (nextStart - new Date()) / (1000 * 60 * 60 * 24)
           );
@@ -632,11 +624,14 @@
         openLog(dateStr) {
           this.state.selectedDateStr = dateStr;
           const modal = document.getElementById("log-modal");
+          const panel = document.getElementById("modal-panel"); // Target inner card
           const entry = this.data.entries[dateStr] || {};
+
           document.getElementById("modal-date-label").textContent = new Date(
             dateStr
           ).toDateString();
 
+          // --- Reset Buttons Logic (same as before) ---
           document.querySelectorAll(".flow-btn").forEach((b) => {
             b.classList.remove(
               "ring-2",
@@ -668,12 +663,23 @@
               c.classList.add("bg-neutral-800", "text-white");
             }
           });
+
+          // Show Parent
           modal.classList.remove("hidden", "pointer-events-none");
           setTimeout(() => modal.classList.remove("opacity-0"), 10);
+
+          // Slide Up Child (Remove the translation class)
+          setTimeout(() => panel.classList.remove("translate-y-full"), 10);
         },
 
         closeModal() {
           const modal = document.getElementById("log-modal");
+          const panel = document.getElementById("modal-panel");
+
+          // Slide Down Child
+          panel.classList.add("translate-y-full");
+
+          // Fade Out Parent
           modal.classList.add("opacity-0");
           setTimeout(
             () => modal.classList.add("hidden", "pointer-events-none"),
@@ -826,7 +832,6 @@
             },
           });
         },
-
         renderJSONViewer() {
           document.getElementById("json-viewer").textContent = JSON.stringify(
             this.data,
@@ -835,11 +840,10 @@
           );
         },
         exportData() {
-          const dataStr =
+          const a = document.createElement("a");
+          a.href =
             "data:text/json;charset=utf-8," +
             encodeURIComponent(JSON.stringify(this.data));
-          const a = document.createElement("a");
-          a.href = dataStr;
           a.download = "backup.json";
           document.body.appendChild(a);
           a.click();
