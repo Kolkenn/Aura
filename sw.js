@@ -1,6 +1,6 @@
 // --- CONFIGURATION ---
 // Bump this to v1.0.2 etc. to trigger updates
-const APP_VERSION = "v1.1.0";
+const APP_VERSION = "v1.2.1";
 // ---------------------
 
 const CACHE_NAME = `aura-tracker-${APP_VERSION}`;
