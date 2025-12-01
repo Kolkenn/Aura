@@ -240,7 +240,7 @@
             >
           </div>
 
-          <!-- Update Status Info (NEW) -->
+          <!-- Update Status Info -->
           <div
             class="flex justify-between items-center p-3 bg-neutral-50 rounded-lg mt-1"
           >
@@ -454,7 +454,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.2 (Debug UI)";
+      const UI_VERSION = "v1.3 - Stable";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -477,15 +477,12 @@
       window.addEventListener("online", updateConnectionStatus);
       window.addEventListener("offline", updateConnectionStatus);
 
-      // --- PWA LIFECYCLE & UPDATE LOGIC ---
+      // --- PWA UPDATES ---
       let newWorker = null;
 
-      // UI Helper: Update both Toast and Settings UI
       function handleUpdateReady(worker) {
         newWorker = worker;
-        // 1. Show Toast
         document.getElementById("update-toast").classList.remove("hidden");
-        // 2. Update Settings UI
         const statusText = document.getElementById("update-status-display");
         statusText.textContent = "Update Ready";
         statusText.className = "text-sm text-brand-600 font-bold";
@@ -494,7 +491,6 @@
           .classList.remove("hidden");
       }
 
-      // Shared Restart Trigger
       const triggerRestart = () => {
         if (newWorker) newWorker.postMessage({ type: "SKIP_WAITING" });
       };
@@ -505,60 +501,73 @@
         .getElementById("manual-restart-btn")
         .addEventListener("click", triggerRestart);
 
-      // Version Fetcher with Timeout
+      // IMPROVED: Robust Version Fetcher
       function fetchVersion() {
+        // Helper to handle the reply
+        const handleVersion = (v) => {
+          document.getElementById("app-version-display").textContent = v;
+        };
+
         if (navigator.serviceWorker.controller) {
+          // Happy path: We are controlled
           const messageChannel = new MessageChannel();
           const timeout = setTimeout(() => {
-            document.getElementById("app-version-display").textContent =
-              UI_VERSION + " (Timeout)";
-            navigator.serviceWorker.ready.then((reg) => reg.update());
+            // Fallback if controller is silent
+            handleVersion(UI_VERSION + " (Timeout)");
           }, 1000);
           messageChannel.port1.onmessage = (event) => {
             clearTimeout(timeout);
-            document.getElementById("app-version-display").textContent =
-              event.data;
+            handleVersion(event.data);
           };
           navigator.serviceWorker.controller.postMessage(
             { type: "GET_VERSION" },
             [messageChannel.port2]
           );
         } else {
-          document.getElementById("app-version-display").textContent =
-            UI_VERSION + " (Uncontrolled)";
+          // Uncontrolled path: Try to talk to the active registration anyway
+          navigator.serviceWorker.ready.then((reg) => {
+            if (reg.active) {
+              const messageChannel = new MessageChannel();
+              messageChannel.port1.onmessage = (event) =>
+                handleVersion(event.data + " (Uncontrolled)");
+              reg.active.postMessage({ type: "GET_VERSION" }, [
+                messageChannel.port2,
+              ]);
+            } else {
+              handleVersion(UI_VERSION + " (No SW)");
+            }
+          });
         }
       }
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("sw.js").then((reg) => {
-            // Initial Status
             document.getElementById("update-status-display").textContent =
               "Checking...";
 
-            // Force Immediate Check
             reg.update().then(() => {
-              // If check completes and nothing found
               if (!reg.waiting && !reg.installing) {
                 document.getElementById("update-status-display").textContent =
                   "Up to date";
               }
             });
 
-            // 1. Check if update already waiting
             if (reg.waiting) handleUpdateReady(reg.waiting);
 
-            // 2. Monitor for new updates found during this session
             reg.addEventListener("updatefound", () => {
               document.getElementById("update-status-display").textContent =
                 "Downloading...";
               const installingWorker = reg.installing;
               installingWorker.addEventListener("statechange", () => {
-                if (
-                  installingWorker.state === "installed" &&
-                  navigator.serviceWorker.controller
-                ) {
+                // FIX: Removed the '&& navigator.serviceWorker.controller' check
+                // This allows the toast to show even on the first 'Uncontrolled' load
+                if (installingWorker.state === "installed") {
                   handleUpdateReady(installingWorker);
+                }
+                if (installingWorker.state === "redundant") {
+                  document.getElementById("update-status-display").textContent =
+                    "Update Failed";
                 }
               });
             });
