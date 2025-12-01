@@ -240,7 +240,7 @@
             >
           </div>
 
-          <!-- Update Status Info -->
+          <!-- Update Status Info (Modified Button) -->
           <div
             class="flex justify-between items-center p-3 bg-neutral-50 rounded-lg mt-1"
           >
@@ -249,11 +249,12 @@
               <span id="update-status-display" class="text-sm text-neutral-400"
                 >Idle</span
               >
+              <!-- Removed 'hidden' class here -->
               <button
                 id="manual-restart-btn"
-                class="hidden bg-brand-600 text-white px-3 py-1 rounded text-xs font-bold shadow-sm hover:bg-brand-700 active:scale-95 transition-transform"
+                class="bg-brand-600 text-white px-3 py-1 rounded text-xs font-bold shadow-sm hover:bg-brand-700 active:scale-95 transition-transform"
               >
-                Restart
+                Force Update
               </button>
             </div>
           </div>
@@ -454,7 +455,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.3.1 (Debug+)";
+      const UI_VERSION = "v1.3 - Force UI";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -486,13 +487,36 @@
         const statusText = document.getElementById("update-status-display");
         statusText.textContent = "Update Ready";
         statusText.className = "text-sm text-brand-600 font-bold";
-        document
-          .getElementById("manual-restart-btn")
-          .classList.remove("hidden");
+        // Update button text to reflect the state
+        const btn = document.getElementById("manual-restart-btn");
+        btn.textContent = "Apply Update";
+        btn.classList.add("bg-green-600", "hover:bg-green-700");
       }
 
+      // IMPROVED: Nuclear Trigger Logic
       const triggerRestart = () => {
-        if (newWorker) newWorker.postMessage({ type: "SKIP_WAITING" });
+        if (newWorker) {
+          // Happy path: Update is ready
+          newWorker.postMessage({ type: "SKIP_WAITING" });
+        } else {
+          // Nuclear path: Stuck or Idle -> Unregister and Reload
+          if (
+            confirm(
+              "Force update? This will reload the app and check for the latest version."
+            )
+          ) {
+            navigator.serviceWorker.getRegistration().then((reg) => {
+              if (reg) {
+                // Unregister logic clears the sticky cache registration
+                reg.unregister().then(() => {
+                  window.location.reload();
+                });
+              } else {
+                window.location.reload();
+              }
+            });
+          }
+        }
       };
       document
         .getElementById("update-btn")
@@ -501,15 +525,13 @@
         .getElementById("manual-restart-btn")
         .addEventListener("click", triggerRestart);
 
-      // IMPROVED: Robust Version Fetcher
+      // Version Fetcher
       function fetchVersion() {
-        // Helper to handle the reply
         const handleVersion = (v) => {
           document.getElementById("app-version-display").textContent = v;
         };
 
         if (navigator.serviceWorker.controller) {
-          // Happy path: We are controlled
           const messageChannel = new MessageChannel();
           const timeout = setTimeout(() => {
             handleVersion(UI_VERSION + " (Timeout)");
@@ -523,9 +545,7 @@
             [messageChannel.port2]
           );
         } else {
-          // Uncontrolled path: Show local version immediately, then try to get active SW
           handleVersion(UI_VERSION + " (No Controller)");
-
           navigator.serviceWorker.ready.then((reg) => {
             if (reg.active) {
               const messageChannel = new MessageChannel();
@@ -576,7 +596,6 @@
                     document.getElementById(
                       "update-status-display"
                     ).textContent = "Update Failed (Redundant)";
-                    console.error("SW became redundant. Check urlsToCache.");
                   }
                 });
               });
@@ -584,11 +603,10 @@
               fetchVersion();
             })
             .catch((err) => {
-              // Registration Failed Catch Block
               console.error("SW Reg Failed", err);
               document.getElementById("update-status-display").textContent =
                 "Reg Failed";
-              fetchVersion(); // Try to show version anyway
+              fetchVersion();
             });
 
           navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -637,7 +655,6 @@
 
         init() {
           updateConnectionStatus();
-          // Set initial text
           document.getElementById("app-version-display").textContent =
             UI_VERSION + "...";
 
