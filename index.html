@@ -394,13 +394,6 @@
         </button>
         <button
           class="nav-btn flex flex-col items-center justify-center w-full h-full text-neutral-400"
-          data-target="view-blueprint"
-        >
-          <span class="text-2xl mb-0.5">📋</span
-          ><span class="text-[10px] font-medium">Status</span>
-        </button>
-        <button
-          class="nav-btn flex flex-col items-center justify-center w-full h-full text-neutral-400"
           data-target="view-settings"
         >
           <span class="text-2xl mb-0.5">⚙️</span
@@ -556,7 +549,7 @@
         },
 
         switchView(viewId, btn) {
-          ["view-prototype", "view-blueprint", "view-settings"].forEach((id) =>
+          ["view-prototype", "view-settings"].forEach((id) =>
             document.getElementById(id).classList.add("hidden")
           );
           document.getElementById(viewId).classList.remove("hidden");
