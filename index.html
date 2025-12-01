@@ -246,7 +246,9 @@
           >
             <span class="text-sm text-neutral-600">Update Status</span>
             <div class="flex items-center gap-2">
-              <span id="update-status-display" class="text-sm text-neutral-400"
+              <span
+                id="update-status-display"
+                class="text-sm text-neutral-400 truncate max-w-[100px]"
                 >Idle</span
               >
               <!-- Removed 'hidden' class here -->
@@ -455,7 +457,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.3 - Force UI";
+      const UI_VERSION = "v1.3 - Diagnostics";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -578,8 +580,9 @@
                 })
                 .catch((err) => {
                   console.warn("Update check failed", err);
+                  // NEW: Show error message in UI
                   document.getElementById("update-status-display").textContent =
-                    "Check Failed";
+                    "Fail: " + err.message;
                 });
 
               if (reg.waiting) handleUpdateReady(reg.waiting);
@@ -604,8 +607,9 @@
             })
             .catch((err) => {
               console.error("SW Reg Failed", err);
+              // NEW: Show error message in UI
               document.getElementById("update-status-display").textContent =
-                "Reg Failed";
+                "Reg Fail: " + err.message;
               fetchVersion();
             });
 
