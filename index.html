@@ -6,13 +6,14 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Aura - Cycle Tracking MVP</title>
+    <title>Aura - Cycle Tracking</title>
 
     <!-- PWA Config -->
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Aura" />
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -90,9 +91,7 @@
     >
       <div class="flex items-center gap-2">
         <span class="text-2xl">🌸</span>
-        <h1 class="text-lg font-bold text-neutral-800 tracking-tight">
-          Aura - Cycle Tracking
-        </h1>
+        <h1 class="text-lg font-bold text-neutral-800 tracking-tight">Aura</h1>
       </div>
 
       <div class="flex items-center gap-2">
@@ -200,7 +199,7 @@
         </div>
       </div>
 
-      <!-- VIEW 2: SETTINGS -->
+      <!-- VIEW 2: SETTINGS (Formerly View 3) -->
       <div id="view-settings" class="hidden space-y-6">
         <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
           <h3 class="font-bold text-neutral-800 mb-2">App Info</h3>
@@ -211,7 +210,7 @@
             <span
               id="app-version-display"
               class="text-sm font-mono font-bold text-brand-600"
-              >Unknown</span
+              >...</span
             >
           </div>
 
@@ -403,6 +402,10 @@
     </nav>
 
     <script>
+      // --- CONFIGURATION ---
+      const UI_VERSION = "v1.0.1"; // Fallback version if SW is not active
+      // ---------------------
+
       // --- PWA LIFECYCLE & UPDATE LOGIC ---
       let newWorker = null;
 
@@ -412,19 +415,17 @@
         toast.classList.remove("hidden");
       }
 
-      // Click handler for Restart Button
       document.getElementById("update-btn").addEventListener("click", () => {
         if (newWorker) {
-          // Send message to SW to skip waiting
           newWorker.postMessage({ type: "SKIP_WAITING" });
         }
       });
 
-      // Function to request version from Active SW
       function fetchVersion() {
         if (navigator.serviceWorker.controller) {
           const messageChannel = new MessageChannel();
           messageChannel.port1.onmessage = (event) => {
+            // Update if SW has a different version
             document.getElementById("app-version-display").textContent =
               event.data;
           };
@@ -440,16 +441,13 @@
           navigator.serviceWorker.register("sw.js").then((reg) => {
             console.log("SW Registered");
 
-            // 1. Check if there is already a waiting worker (update ready)
             if (reg.waiting) {
               showUpdateToast(reg.waiting);
             }
 
-            // 2. Listen for new workers appearing
             reg.addEventListener("updatefound", () => {
               const installingWorker = reg.installing;
               installingWorker.addEventListener("statechange", () => {
-                // If it reached 'installed' state and we already have a controller (meaning it's an update, not first load)
                 if (
                   installingWorker.state === "installed" &&
                   navigator.serviceWorker.controller
@@ -459,11 +457,9 @@
               });
             });
 
-            // 3. Ask for Version
             fetchVersion();
           });
 
-          // 4. Reload page when controller changes (The "Restart" action)
           navigator.serviceWorker.addEventListener("controllerchange", () => {
             window.location.reload();
           });
@@ -511,6 +507,10 @@
         chartInstance: null,
 
         init() {
+          // Set default version immediately
+          document.getElementById("app-version-display").textContent =
+            UI_VERSION;
+
           const saved = localStorage.getItem("cycle_tracker_mvp_data");
           if (saved)
             try {

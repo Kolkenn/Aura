@@ -1,9 +1,9 @@
 // --- CONFIGURATION ---
-// You only need to change this one line to trigger an update.
-const APP_VERSION = "v0.1";
+// Bump this to v1.0.2 etc. to trigger updates
+const APP_VERSION = "v1.0.1";
 // ---------------------
 
-const CACHE_NAME = `aura-cycle-tracking-${APP_VERSION}`;
+const CACHE_NAME = `aura-tracker-${APP_VERSION}`;
 const urlsToCache = [
   "./",
   "./index.html",
@@ -32,7 +32,6 @@ self.addEventListener("activate", (event) => {
       );
     })
   );
-  // Important: Claim clients immediately so the app can be controlled without a second reload
   return self.clients.claim();
 });
 
@@ -44,7 +43,7 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// --- NEW: Message Handling ---
+// --- Message Handling ---
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
