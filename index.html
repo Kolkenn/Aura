@@ -103,7 +103,7 @@
           <span>⬇</span> Install
         </button>
 
-        <!-- Connectivity Indicator (Modified) -->
+        <!-- Connectivity Indicator -->
         <div
           id="status-indicator"
           class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors bg-neutral-100 text-neutral-500"
@@ -139,7 +139,7 @@
       id="main-container"
       class="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24 relative scroll-smooth"
     >
-      <!-- VIEW 1: PROTOTYPE -->
+      <!-- VIEW 1: CALENDAR (Formerly Prototype) -->
       <div id="view-prototype" class="space-y-6">
         <div class="bg-white rounded-2xl shadow-sm p-4">
           <div class="flex justify-between items-center mb-4">
@@ -204,7 +204,26 @@
         </div>
       </div>
 
-      <!-- VIEW 2: SETTINGS -->
+      <!-- VIEW 2: LIST VIEW (NEW) -->
+      <div id="view-list" class="hidden space-y-4">
+        <div
+          class="bg-white p-4 rounded-xl shadow-sm border border-neutral-100"
+        >
+          <h2 class="text-lg font-bold text-neutral-800">History Log</h2>
+          <p class="text-xs text-neutral-500">
+            All recorded events in chronological order.
+          </p>
+        </div>
+
+        <div id="list-container" class="space-y-3 pb-safe">
+          <!-- JS will populate this -->
+          <div class="text-center py-10 text-neutral-400 text-sm">
+            No logs found yet.
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: SETTINGS -->
       <div id="view-settings" class="hidden space-y-6">
         <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
           <h3 class="font-bold text-neutral-800 mb-2">App Info</h3>
@@ -398,6 +417,13 @@
         </button>
         <button
           class="nav-btn flex flex-col items-center justify-center w-full h-full text-neutral-400"
+          data-target="view-list"
+        >
+          <span class="text-2xl mb-0.5">📜</span
+          ><span class="text-[10px] font-medium">History</span>
+        </button>
+        <button
+          class="nav-btn flex flex-col items-center justify-center w-full h-full text-neutral-400"
           data-target="view-settings"
         >
           <span class="text-2xl mb-0.5">⚙️</span
@@ -408,10 +434,10 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.0";
+      const UI_VERSION = "v1.1"; // Update to match SW
       // ---------------------
 
-      // --- CONNECTIVITY LOGIC ---
+      // --- CONNECTIVITY ---
       function updateConnectionStatus() {
         const statusEl = document.getElementById("status-indicator");
         const dotEl = document.getElementById("status-dot");
@@ -431,21 +457,15 @@
       }
       window.addEventListener("online", updateConnectionStatus);
       window.addEventListener("offline", updateConnectionStatus);
-      // --------------------------------
 
-      // --- PWA LIFECYCLE & UPDATE LOGIC ---
+      // --- PWA UPDATES ---
       let newWorker = null;
-
       function showUpdateToast(worker) {
         newWorker = worker;
-        const toast = document.getElementById("update-toast");
-        toast.classList.remove("hidden");
+        document.getElementById("update-toast").classList.remove("hidden");
       }
-
       document.getElementById("update-btn").addEventListener("click", () => {
-        if (newWorker) {
-          newWorker.postMessage({ type: "SKIP_WAITING" });
-        }
+        if (newWorker) newWorker.postMessage({ type: "SKIP_WAITING" });
       });
 
       function fetchVersion() {
@@ -465,42 +485,27 @@
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("sw.js").then((reg) => {
-            console.log("SW Registered");
-
-            // 1. Force the browser to check for an update immediately
             reg.update();
-
-            // 2. Check if an update is ALREADY waiting (loaded before page)
-            if (reg.waiting) {
-              showUpdateToast(reg.waiting);
-            }
-
-            // 3. Listen for new updates found *after* page load
+            if (reg.waiting) showUpdateToast(reg.waiting);
             reg.addEventListener("updatefound", () => {
               const installingWorker = reg.installing;
-
               installingWorker.addEventListener("statechange", () => {
-                // If the new worker has finished downloading/installing
-                if (installingWorker.state === "installed") {
-                  // AND there is already a controller (meaning this is an update, not a fresh install)
-                  if (navigator.serviceWorker.controller) {
-                    showUpdateToast(installingWorker);
-                  }
-                }
+                if (
+                  installingWorker.state === "installed" &&
+                  navigator.serviceWorker.controller
+                )
+                  showUpdateToast(installingWorker);
               });
             });
-
             fetchVersion();
           });
-
-          // 4. Reload the page when the new SW takes control
           navigator.serviceWorker.addEventListener("controllerchange", () => {
             window.location.reload();
           });
         });
       }
 
-      // PWA INSTALL PROMPT
+      // PWA INSTALL
       let deferredPrompt;
       const installBtn = document.getElementById("install-btn");
       window.addEventListener("beforeinstallprompt", (e) => {
@@ -511,7 +516,6 @@
       installBtn.addEventListener("click", async () => {
         if (!deferredPrompt) return;
         deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
         deferredPrompt = null;
         installBtn.classList.add("hidden");
       });
@@ -578,11 +582,12 @@
           this.setupFlowListeners();
           this.renderCalendar();
           this.updateStats();
+          this.renderListView();
           this.renderJSONViewer();
         },
 
         switchView(viewId, btn) {
-          ["view-prototype", "view-settings"].forEach((id) =>
+          ["view-prototype", "view-list", "view-settings"].forEach((id) =>
             document.getElementById(id).classList.add("hidden")
           );
           document.getElementById(viewId).classList.remove("hidden");
@@ -594,6 +599,7 @@
           btn.classList.add("text-brand-500");
           if (viewId === "view-settings") this.renderJSONViewer();
           if (viewId === "view-prototype") this.updateStats();
+          if (viewId === "view-list") this.renderListView();
         },
 
         saveData() {
@@ -601,6 +607,7 @@
             "cycle_tracker_mvp_data",
             JSON.stringify(this.data)
           );
+          this.renderListView();
           this.renderJSONViewer();
         },
 
@@ -671,6 +678,97 @@
               dayEl.innerHTML += `<span class="absolute bottom-1 w-1 h-1 rounded-full bg-yellow-400"></span>`;
             grid.appendChild(dayEl);
           }
+        },
+
+        renderListView() {
+          const container = document.getElementById("list-container");
+          container.innerHTML = "";
+
+          const dates = Object.keys(this.data.entries).sort().reverse(); // Newest first
+
+          if (dates.length === 0) {
+            container.innerHTML =
+              '<div class="text-center py-10 text-neutral-400 text-sm">No logs found. Tap a date on the calendar to start.</div>';
+            return;
+          }
+
+          const moodMap = {
+            happy: "😊",
+            neutral: "😐",
+            sad: "😢",
+            irritable: "😠",
+            tired: "😴",
+          };
+          const flowMap = {
+            spotting: "Spotting 💧",
+            light: "Light 💧💧",
+            medium: "Medium 🩸",
+            heavy: "Heavy 🌊",
+          };
+
+          dates.forEach((dateStr) => {
+            const entry = this.data.entries[dateStr];
+            if (!entry) return;
+
+            const dateObj = new Date(dateStr);
+            const dayName = dateObj.toLocaleDateString("en-US", {
+              weekday: "short",
+            });
+            const dayNum = dateObj.getDate();
+            const month = dateObj.toLocaleDateString("en-US", {
+              month: "short",
+            });
+
+            const card = document.createElement("div");
+            card.className =
+              "bg-white p-4 rounded-xl shadow-sm border border-neutral-100 flex gap-4 items-start active:scale-[0.98] transition-transform cursor-pointer";
+            card.onclick = () => {
+              // Switch to calendar view briefly then open modal to keep context logic simple
+              // Or just open modal directly (easier)
+              this.openLog(dateStr);
+            };
+
+            // Date Box
+            const dateBox = document.createElement("div");
+            dateBox.className =
+              "flex-shrink-0 flex flex-col items-center justify-center bg-neutral-50 rounded-lg w-14 h-14 border border-neutral-200";
+            dateBox.innerHTML = `<span class="text-xs text-neutral-500 uppercase font-bold">${month}</span><span class="text-xl font-bold text-neutral-800">${dayNum}</span>`;
+
+            // Content
+            const contentBox = document.createElement("div");
+            contentBox.className = "flex-grow space-y-1";
+
+            // Flow & Mood Row
+            const topRow = document.createElement("div");
+            topRow.className = "flex items-center gap-2";
+
+            if (entry.flow) {
+              const flowBadge = document.createElement("span");
+              flowBadge.className =
+                "text-xs font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full";
+              flowBadge.textContent = flowMap[entry.flow] || entry.flow;
+              topRow.appendChild(flowBadge);
+            }
+
+            if (entry.mood) {
+              const moodBadge = document.createElement("span");
+              moodBadge.textContent = moodMap[entry.mood] || "";
+              topRow.appendChild(moodBadge);
+            }
+            contentBox.appendChild(topRow);
+
+            // Symptoms
+            if (entry.symptoms && entry.symptoms.length > 0) {
+              const sympRow = document.createElement("div");
+              sympRow.className = "text-xs text-neutral-500 leading-snug";
+              sympRow.textContent = entry.symptoms.join(", ");
+              contentBox.appendChild(sympRow);
+            }
+
+            card.appendChild(dateBox);
+            card.appendChild(contentBox);
+            container.appendChild(card);
+          });
         },
 
         calculatePredictions() {
