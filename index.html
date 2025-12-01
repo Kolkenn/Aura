@@ -96,7 +96,7 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- Install Button (Hidden by default, shown via JS) -->
+        <!-- Install Button -->
         <button
           id="install-btn"
           class="hidden text-xs font-bold text-white bg-brand-500 px-3 py-1.5 rounded-full shadow-sm hover:bg-brand-600 transition-colors flex items-center gap-1"
@@ -112,6 +112,23 @@
         </div>
       </div>
     </header>
+
+    <!-- UPDATE NOTIFICATION TOAST -->
+    <div
+      id="update-toast"
+      class="hidden fixed top-16 left-4 right-4 bg-neutral-800 text-white p-4 rounded-xl shadow-2xl z-50 flex items-center justify-between transform transition-all duration-300"
+    >
+      <div>
+        <p class="font-bold text-sm">Update Available</p>
+        <p class="text-xs text-neutral-400">Restart to apply changes.</p>
+      </div>
+      <button
+        id="update-btn"
+        class="bg-brand-500 text-white px-4 py-2 rounded-lg text-xs font-bold shadow hover:bg-brand-600"
+      >
+        Restart
+      </button>
+    </div>
 
     <!-- Main Content Area -->
     <main
@@ -186,7 +203,19 @@
       <!-- VIEW 2: SETTINGS -->
       <div id="view-settings" class="hidden space-y-6">
         <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
-          <h3 class="font-bold text-neutral-800 mb-2">Data Management</h3>
+          <h3 class="font-bold text-neutral-800 mb-2">App Info</h3>
+          <div
+            class="flex justify-between items-center p-3 bg-neutral-50 rounded-lg"
+          >
+            <span class="text-sm text-neutral-600">Current Version</span>
+            <span
+              id="app-version-display"
+              class="text-sm font-mono font-bold text-brand-600"
+              >Unknown</span
+            >
+          </div>
+
+          <h3 class="font-bold text-neutral-800 mb-2 mt-6">Data Management</h3>
           <button
             onclick="app.exportData()"
             class="w-full flex items-center justify-between p-3 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg transition-colors"
@@ -241,7 +270,6 @@
       id="log-modal"
       class="fixed inset-0 bg-neutral-900/50 z-50 hidden flex items-end sm:items-center sm:justify-center backdrop-blur-sm transition-opacity opacity-0 pointer-events-none"
     >
-      <!-- Added ID 'modal-panel' here to target the slide animation -->
       <div
         id="modal-panel"
         class="bg-white w-full sm:w-96 sm:rounded-2xl rounded-t-2xl shadow-2xl transform transition-transform translate-y-full sm:translate-y-0 p-5 max-h-[90vh] overflow-y-auto"
@@ -382,7 +410,75 @@
     </nav>
 
     <script>
-      // PWA INSTALL LOGIC
+      // --- PWA LIFECYCLE & UPDATE LOGIC ---
+      let newWorker = null;
+
+      function showUpdateToast(worker) {
+        newWorker = worker;
+        const toast = document.getElementById("update-toast");
+        toast.classList.remove("hidden");
+      }
+
+      // Click handler for Restart Button
+      document.getElementById("update-btn").addEventListener("click", () => {
+        if (newWorker) {
+          // Send message to SW to skip waiting
+          newWorker.postMessage({ type: "SKIP_WAITING" });
+        }
+      });
+
+      // Function to request version from Active SW
+      function fetchVersion() {
+        if (navigator.serviceWorker.controller) {
+          const messageChannel = new MessageChannel();
+          messageChannel.port1.onmessage = (event) => {
+            document.getElementById("app-version-display").textContent =
+              event.data;
+          };
+          navigator.serviceWorker.controller.postMessage(
+            { type: "GET_VERSION" },
+            [messageChannel.port2]
+          );
+        }
+      }
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("sw.js").then((reg) => {
+            console.log("SW Registered");
+
+            // 1. Check if there is already a waiting worker (update ready)
+            if (reg.waiting) {
+              showUpdateToast(reg.waiting);
+            }
+
+            // 2. Listen for new workers appearing
+            reg.addEventListener("updatefound", () => {
+              const installingWorker = reg.installing;
+              installingWorker.addEventListener("statechange", () => {
+                // If it reached 'installed' state and we already have a controller (meaning it's an update, not first load)
+                if (
+                  installingWorker.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
+                  showUpdateToast(installingWorker);
+                }
+              });
+            });
+
+            // 3. Ask for Version
+            fetchVersion();
+          });
+
+          // 4. Reload page when controller changes (The "Restart" action)
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            window.location.reload();
+          });
+        });
+      }
+      // ------------------------------------
+
+      // PWA INSTALL PROMPT
       let deferredPrompt;
       const installBtn = document.getElementById("install-btn");
       window.addEventListener("beforeinstallprompt", (e) => {
@@ -397,13 +493,6 @@
         deferredPrompt = null;
         installBtn.classList.add("hidden");
       });
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("sw.js")
-            .catch((err) => console.log("SW failed", err));
-        });
-      }
 
       // APP LOGIC
       const app = {
