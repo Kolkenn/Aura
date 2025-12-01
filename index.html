@@ -139,7 +139,7 @@
       id="main-container"
       class="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24 relative scroll-smooth"
     >
-      <!-- VIEW 1: CALENDAR (Formerly Prototype) -->
+      <!-- VIEW 1: CALENDAR -->
       <div id="view-prototype" class="space-y-6">
         <div class="bg-white rounded-2xl shadow-sm p-4">
           <div class="flex justify-between items-center mb-4">
@@ -204,7 +204,7 @@
         </div>
       </div>
 
-      <!-- VIEW 2: LIST VIEW (NEW) -->
+      <!-- VIEW 2: LIST VIEW -->
       <div id="view-list" class="hidden space-y-4">
         <div
           class="bg-white p-4 rounded-xl shadow-sm border border-neutral-100"
@@ -227,6 +227,8 @@
       <div id="view-settings" class="hidden space-y-6">
         <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
           <h3 class="font-bold text-neutral-800 mb-2">App Info</h3>
+
+          <!-- Version Info -->
           <div
             class="flex justify-between items-center p-3 bg-neutral-50 rounded-lg"
           >
@@ -236,6 +238,24 @@
               class="text-sm font-mono font-bold text-brand-600"
               >...</span
             >
+          </div>
+
+          <!-- Update Status Info (NEW) -->
+          <div
+            class="flex justify-between items-center p-3 bg-neutral-50 rounded-lg mt-1"
+          >
+            <span class="text-sm text-neutral-600">Update Status</span>
+            <div class="flex items-center gap-2">
+              <span id="update-status-display" class="text-sm text-neutral-400"
+                >Idle</span
+              >
+              <button
+                id="manual-restart-btn"
+                class="hidden bg-brand-600 text-white px-3 py-1 rounded text-xs font-bold shadow-sm hover:bg-brand-700 active:scale-95 transition-transform"
+              >
+                Restart
+              </button>
+            </div>
           </div>
 
           <h3 class="font-bold text-neutral-800 mb-2 mt-6">Data Management</h3>
@@ -434,7 +454,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.2 - Default"; // Update to match SW
+      const UI_VERSION = "v1.2 (Debug UI)";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -442,7 +462,6 @@
         const statusEl = document.getElementById("status-indicator");
         const dotEl = document.getElementById("status-dot");
         const textEl = document.getElementById("status-text");
-
         if (navigator.onLine) {
           statusEl.className =
             "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors bg-green-100 text-green-700";
@@ -458,20 +477,45 @@
       window.addEventListener("online", updateConnectionStatus);
       window.addEventListener("offline", updateConnectionStatus);
 
-      // --- PWA UPDATES ---
+      // --- PWA LIFECYCLE & UPDATE LOGIC ---
       let newWorker = null;
-      function showUpdateToast(worker) {
-        newWorker = worker;
-        document.getElementById("update-toast").classList.remove("hidden");
-      }
-      document.getElementById("update-btn").addEventListener("click", () => {
-        if (newWorker) newWorker.postMessage({ type: "SKIP_WAITING" });
-      });
 
+      // UI Helper: Update both Toast and Settings UI
+      function handleUpdateReady(worker) {
+        newWorker = worker;
+        // 1. Show Toast
+        document.getElementById("update-toast").classList.remove("hidden");
+        // 2. Update Settings UI
+        const statusText = document.getElementById("update-status-display");
+        statusText.textContent = "Update Ready";
+        statusText.className = "text-sm text-brand-600 font-bold";
+        document
+          .getElementById("manual-restart-btn")
+          .classList.remove("hidden");
+      }
+
+      // Shared Restart Trigger
+      const triggerRestart = () => {
+        if (newWorker) newWorker.postMessage({ type: "SKIP_WAITING" });
+      };
+      document
+        .getElementById("update-btn")
+        .addEventListener("click", triggerRestart);
+      document
+        .getElementById("manual-restart-btn")
+        .addEventListener("click", triggerRestart);
+
+      // Version Fetcher with Timeout
       function fetchVersion() {
         if (navigator.serviceWorker.controller) {
           const messageChannel = new MessageChannel();
+          const timeout = setTimeout(() => {
+            document.getElementById("app-version-display").textContent =
+              UI_VERSION + " (Timeout)";
+            navigator.serviceWorker.ready.then((reg) => reg.update());
+          }, 1000);
           messageChannel.port1.onmessage = (event) => {
+            clearTimeout(timeout);
             document.getElementById("app-version-display").textContent =
               event.data;
           };
@@ -479,24 +523,46 @@
             { type: "GET_VERSION" },
             [messageChannel.port2]
           );
+        } else {
+          document.getElementById("app-version-display").textContent =
+            UI_VERSION + " (Uncontrolled)";
         }
       }
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("sw.js").then((reg) => {
-            reg.update();
-            if (reg.waiting) showUpdateToast(reg.waiting);
+            // Initial Status
+            document.getElementById("update-status-display").textContent =
+              "Checking...";
+
+            // Force Immediate Check
+            reg.update().then(() => {
+              // If check completes and nothing found
+              if (!reg.waiting && !reg.installing) {
+                document.getElementById("update-status-display").textContent =
+                  "Up to date";
+              }
+            });
+
+            // 1. Check if update already waiting
+            if (reg.waiting) handleUpdateReady(reg.waiting);
+
+            // 2. Monitor for new updates found during this session
             reg.addEventListener("updatefound", () => {
+              document.getElementById("update-status-display").textContent =
+                "Downloading...";
               const installingWorker = reg.installing;
               installingWorker.addEventListener("statechange", () => {
                 if (
                   installingWorker.state === "installed" &&
                   navigator.serviceWorker.controller
-                )
-                  showUpdateToast(installingWorker);
+                ) {
+                  handleUpdateReady(installingWorker);
+                }
               });
             });
+
             fetchVersion();
           });
           navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -546,7 +612,7 @@
         init() {
           updateConnectionStatus();
           document.getElementById("app-version-display").textContent =
-            UI_VERSION;
+            UI_VERSION + "...";
 
           const saved = localStorage.getItem("cycle_tracker_mvp_data");
           if (saved)
@@ -683,15 +749,12 @@
         renderListView() {
           const container = document.getElementById("list-container");
           container.innerHTML = "";
-
-          const dates = Object.keys(this.data.entries).sort().reverse(); // Newest first
-
+          const dates = Object.keys(this.data.entries).sort().reverse();
           if (dates.length === 0) {
             container.innerHTML =
               '<div class="text-center py-10 text-neutral-400 text-sm">No logs found. Tap a date on the calendar to start.</div>';
             return;
           }
-
           const moodMap = {
             happy: "😊",
             neutral: "😐",
@@ -709,7 +772,6 @@
           dates.forEach((dateStr) => {
             const entry = this.data.entries[dateStr];
             if (!entry) return;
-
             const dateObj = new Date(dateStr);
             const dayName = dateObj.toLocaleDateString("en-US", {
               weekday: "short",
@@ -723,22 +785,16 @@
             card.className =
               "bg-white p-4 rounded-xl shadow-sm border border-neutral-100 flex gap-4 items-start active:scale-[0.98] transition-transform cursor-pointer";
             card.onclick = () => {
-              // Switch to calendar view briefly then open modal to keep context logic simple
-              // Or just open modal directly (easier)
               this.openLog(dateStr);
             };
 
-            // Date Box
             const dateBox = document.createElement("div");
             dateBox.className =
               "flex-shrink-0 flex flex-col items-center justify-center bg-neutral-50 rounded-lg w-14 h-14 border border-neutral-200";
             dateBox.innerHTML = `<span class="text-xs text-neutral-500 uppercase font-bold">${month}</span><span class="text-xl font-bold text-neutral-800">${dayNum}</span>`;
 
-            // Content
             const contentBox = document.createElement("div");
             contentBox.className = "flex-grow space-y-1";
-
-            // Flow & Mood Row
             const topRow = document.createElement("div");
             topRow.className = "flex items-center gap-2";
 
@@ -757,7 +813,6 @@
             }
             contentBox.appendChild(topRow);
 
-            // Symptoms
             if (entry.symptoms && entry.symptoms.length > 0) {
               const sympRow = document.createElement("div");
               sympRow.className = "text-xs text-neutral-500 leading-snug";
