@@ -455,7 +455,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.3.4 - Path Fix";
+      const UI_VERSION = "v1.3.4 - Absolute Path";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -488,11 +488,13 @@
         statusText.textContent = "Update Ready";
         statusText.className =
           "text-xs font-mono text-brand-600 font-bold break-words bg-brand-50 p-2 rounded border border-brand-100";
+
         const btn = document.getElementById("manual-restart-btn");
         btn.textContent = "Apply Update";
         btn.classList.add("bg-green-600", "hover:bg-green-700");
       }
 
+      // Trigger Logic
       const triggerRestart = () => {
         if (newWorker) {
           newWorker.postMessage({ type: "SKIP_WAITING" });
@@ -557,9 +559,13 @@
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          // FIXED: Explicit pathing './sw.js' and scope './'
+          // FIXED: Construct Absolute Path dynamically
+          // This grabs the current folder (e.g., .../Aura/) and appends 'sw.js'
+          const swUrl = new URL("sw.js", window.location.href).href;
+          console.log("Registering SW at:", swUrl);
+
           navigator.serviceWorker
-            .register("./sw.js", { scope: "./" })
+            .register(swUrl)
             .then((reg) => {
               document.getElementById("update-status-display").textContent =
                 "Checking...";
@@ -575,8 +581,9 @@
                 })
                 .catch((err) => {
                   console.warn("Update check failed", err);
+                  // Show the full URL we tried to help debug
                   document.getElementById("update-status-display").textContent =
-                    "Fail: " + err.message;
+                    "Fail fetching " + swUrl + ": " + err.message;
                 });
 
               if (reg.waiting) handleUpdateReady(reg.waiting);
