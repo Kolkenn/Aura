@@ -240,7 +240,7 @@
             >
           </div>
 
-          <!-- Update Status Info (FIXED UI) -->
+          <!-- Update Status Info -->
           <div class="flex flex-col gap-2 p-3 bg-neutral-50 rounded-lg mt-1">
             <div class="flex justify-between items-center">
               <span class="text-sm text-neutral-600">Update Status</span>
@@ -251,7 +251,6 @@
                 Force Update
               </button>
             </div>
-            <!-- Error message area: Allow wrapping and ensure visibility -->
             <span
               id="update-status-display"
               class="text-xs font-mono text-neutral-500 break-words bg-white p-2 rounded border border-neutral-200"
@@ -456,7 +455,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.3 - UI Fix";
+      const UI_VERSION = "v1.3.4 - Path Fix";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -489,13 +488,11 @@
         statusText.textContent = "Update Ready";
         statusText.className =
           "text-xs font-mono text-brand-600 font-bold break-words bg-brand-50 p-2 rounded border border-brand-100";
-
         const btn = document.getElementById("manual-restart-btn");
         btn.textContent = "Apply Update";
         btn.classList.add("bg-green-600", "hover:bg-green-700");
       }
 
-      // Nuclear Trigger Logic
       const triggerRestart = () => {
         if (newWorker) {
           newWorker.postMessage({ type: "SKIP_WAITING" });
@@ -560,8 +557,9 @@
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
+          // FIXED: Explicit pathing './sw.js' and scope './'
           navigator.serviceWorker
-            .register("sw.js")
+            .register("./sw.js", { scope: "./" })
             .then((reg) => {
               document.getElementById("update-status-display").textContent =
                 "Checking...";
@@ -594,7 +592,7 @@
                   if (installingWorker.state === "redundant") {
                     document.getElementById(
                       "update-status-display"
-                    ).textContent = "Failed (Redundant). Likely 404 in sw.js";
+                    ).textContent = "Failed (Redundant)";
                   }
                 });
               });
