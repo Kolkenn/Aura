@@ -103,11 +103,16 @@
           <span>⬇</span> Install
         </button>
 
+        <!-- Connectivity Indicator (Modified) -->
         <div
           id="status-indicator"
-          class="text-xs font-medium text-brand-600 bg-brand-50 px-3 py-1 rounded-full"
+          class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors bg-neutral-100 text-neutral-500"
         >
-          Loading...
+          <span
+            id="status-dot"
+            class="w-2 h-2 rounded-full bg-neutral-400"
+          ></span>
+          <span id="status-text">Checking...</span>
         </div>
       </div>
     </header>
@@ -199,7 +204,7 @@
         </div>
       </div>
 
-      <!-- VIEW 2: SETTINGS (Formerly View 3) -->
+      <!-- VIEW 2: SETTINGS -->
       <div id="view-settings" class="hidden space-y-6">
         <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
           <h3 class="font-bold text-neutral-800 mb-2">App Info</h3>
@@ -403,8 +408,33 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.0.1"; // Fallback version if SW is not active
+      const UI_VERSION = "v1.0.2";
       // ---------------------
+
+      // --- CONNECTIVITY LOGIC (NEW) ---
+      function updateConnectionStatus() {
+        const statusEl = document.getElementById("status-indicator");
+        const dotEl = document.getElementById("status-dot");
+        const textEl = document.getElementById("status-text");
+
+        if (navigator.onLine) {
+          // Online State
+          statusEl.className =
+            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors bg-green-100 text-green-700";
+          dotEl.className = "w-2 h-2 rounded-full bg-green-500";
+          textEl.textContent = "Online";
+        } else {
+          // Offline State
+          statusEl.className =
+            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors bg-neutral-100 text-neutral-500";
+          dotEl.className = "w-2 h-2 rounded-full bg-neutral-400";
+          textEl.textContent = "Offline";
+        }
+      }
+
+      window.addEventListener("online", updateConnectionStatus);
+      window.addEventListener("offline", updateConnectionStatus);
+      // --------------------------------
 
       // --- PWA LIFECYCLE & UPDATE LOGIC ---
       let newWorker = null;
@@ -425,7 +455,6 @@
         if (navigator.serviceWorker.controller) {
           const messageChannel = new MessageChannel();
           messageChannel.port1.onmessage = (event) => {
-            // Update if SW has a different version
             document.getElementById("app-version-display").textContent =
               event.data;
           };
@@ -440,11 +469,7 @@
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("sw.js").then((reg) => {
             console.log("SW Registered");
-
-            if (reg.waiting) {
-              showUpdateToast(reg.waiting);
-            }
-
+            if (reg.waiting) showUpdateToast(reg.waiting);
             reg.addEventListener("updatefound", () => {
               const installingWorker = reg.installing;
               installingWorker.addEventListener("statechange", () => {
@@ -456,16 +481,13 @@
                 }
               });
             });
-
             fetchVersion();
           });
-
           navigator.serviceWorker.addEventListener("controllerchange", () => {
             window.location.reload();
           });
         });
       }
-      // ------------------------------------
 
       // PWA INSTALL PROMPT
       let deferredPrompt;
@@ -507,10 +529,11 @@
         chartInstance: null,
 
         init() {
-          // Set default version immediately
+          // Init Connectivity
+          updateConnectionStatus();
+
           document.getElementById("app-version-display").textContent =
             UI_VERSION;
-
           const saved = localStorage.getItem("cycle_tracker_mvp_data");
           if (saved)
             try {
@@ -679,15 +702,11 @@
             pDate.setDate(nextStart.getDate() + i);
             predictionDates.push(pDate.toISOString().split("T")[0]);
           }
-          const daysUntil = Math.ceil(
-            (nextStart - new Date()) / (1000 * 60 * 60 * 24)
-          );
-          const statusEl = document.getElementById("status-indicator");
-          if (daysUntil > 0)
-            statusEl.textContent = `Period in ~${daysUntil} days`;
-          else if (daysUntil > -7 && daysUntil <= 0)
-            statusEl.textContent = "Period likely now";
-          else statusEl.textContent = "Log to see predictions";
+
+          // --- PREDICTION UI REMOVED ---
+          // The status indicator is now connectivity-only.
+          // -----------------------------
+
           return predictionDates;
         },
 
@@ -701,7 +720,6 @@
             dateStr
           ).toDateString();
 
-          // --- Reset Buttons Logic (same as before) ---
           document.querySelectorAll(".flow-btn").forEach((b) => {
             b.classList.remove(
               "ring-2",
@@ -734,22 +752,15 @@
             }
           });
 
-          // Show Parent
           modal.classList.remove("hidden", "pointer-events-none");
           setTimeout(() => modal.classList.remove("opacity-0"), 10);
-
-          // Slide Up Child (Remove the translation class)
           setTimeout(() => panel.classList.remove("translate-y-full"), 10);
         },
 
         closeModal() {
           const modal = document.getElementById("log-modal");
           const panel = document.getElementById("modal-panel");
-
-          // Slide Down Child
           panel.classList.add("translate-y-full");
-
-          // Fade Out Parent
           modal.classList.add("opacity-0");
           setTimeout(
             () => modal.classList.add("hidden", "pointer-events-none"),
