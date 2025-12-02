@@ -455,7 +455,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.3.4 - Absolute Path";
+      const UI_VERSION = "v1.3.5 - Silver Bullet";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -559,13 +559,13 @@
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          // FIXED: Construct Absolute Path dynamically
-          // This grabs the current folder (e.g., .../Aura/) and appends 'sw.js'
+          // FIXED: Explicit pathing './sw.js' and scope './'
+          // This ensures GitHub pages handles the path correctly
           const swUrl = new URL("sw.js", window.location.href).href;
           console.log("Registering SW at:", swUrl);
 
           navigator.serviceWorker
-            .register(swUrl)
+            .register(swUrl, { scope: "./" })
             .then((reg) => {
               document.getElementById("update-status-display").textContent =
                 "Checking...";
@@ -581,9 +581,8 @@
                 })
                 .catch((err) => {
                   console.warn("Update check failed", err);
-                  // Show the full URL we tried to help debug
                   document.getElementById("update-status-display").textContent =
-                    "Fail fetching " + swUrl + ": " + err.message;
+                    "Fail: " + err.message;
                 });
 
               if (reg.waiting) handleUpdateReady(reg.waiting);
