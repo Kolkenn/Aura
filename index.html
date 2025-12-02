@@ -11,6 +11,7 @@
     <!-- PWA Config -->
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#ffffff" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Aura" />
@@ -100,7 +101,7 @@
           id="install-btn"
           class="hidden text-xs font-bold text-white bg-brand-500 px-3 py-1.5 rounded-full shadow-sm hover:bg-brand-600 transition-colors flex items-center gap-1"
         >
-          <span>⬇</span> Install
+          Install
         </button>
 
         <!-- Connectivity Indicator -->
@@ -248,7 +249,7 @@
                 id="manual-restart-btn"
                 class="bg-brand-600 text-white px-3 py-1 rounded text-xs font-bold shadow-sm hover:bg-brand-700 active:scale-95 transition-transform"
               >
-                Force Update
+                Update
               </button>
             </div>
             <span
@@ -455,7 +456,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.3.5 - Silver Bullet";
+      const UI_VERSION = "v1.3.6";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -560,7 +561,6 @@
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           // FIXED: Explicit pathing './sw.js' and scope './'
-          // This ensures GitHub pages handles the path correctly
           const swUrl = new URL("sw.js", window.location.href).href;
           console.log("Registering SW at:", swUrl);
 
@@ -622,7 +622,7 @@
       let deferredPrompt;
       const installBtn = document.getElementById("install-btn");
       window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
+        // e.preventDefault(); // Removed to allow native banner
         deferredPrompt = e;
         installBtn.classList.remove("hidden");
       });
@@ -698,6 +698,14 @@
           this.renderListView();
           this.renderJSONViewer();
         },
+
+        // --- DATE HELPER (NEW) ---
+        parseLocal(dateStr) {
+          if (!dateStr) return new Date();
+          const [y, m, d] = dateStr.split("-").map(Number);
+          return new Date(y, m - 1, d); // Construct date in local time
+        },
+        // ------------------------
 
         switchView(viewId, btn) {
           ["view-prototype", "view-list", "view-settings"].forEach((id) =>
@@ -819,7 +827,10 @@
           dates.forEach((dateStr) => {
             const entry = this.data.entries[dateStr];
             if (!entry) return;
-            const dateObj = new Date(dateStr);
+
+            // FIXED: Use ParseLocal
+            const dateObj = this.parseLocal(dateStr);
+
             const dayName = dateObj.toLocaleDateString("en-US", {
               weekday: "short",
             });
@@ -921,9 +932,9 @@
           const panel = document.getElementById("modal-panel"); // Target inner card
           const entry = this.data.entries[dateStr] || {};
 
-          document.getElementById("modal-date-label").textContent = new Date(
-            dateStr
-          ).toDateString();
+          // FIXED: Use ParseLocal
+          document.getElementById("modal-date-label").textContent =
+            this.parseLocal(dateStr).toDateString();
 
           document.querySelectorAll(".flow-btn").forEach((b) => {
             b.classList.remove(
@@ -1083,10 +1094,11 @@
               );
               if (diff < 50) {
                 lengths.push(diff);
+
+                // FIXED: Use ParseLocal
+                const labelDate = this.parseLocal(starts[i - 1]);
                 labels.push(
-                  new Date(starts[i - 1]).toLocaleString("default", {
-                    month: "short",
-                  })
+                  labelDate.toLocaleString("default", { month: "short" })
                 );
               }
             }
