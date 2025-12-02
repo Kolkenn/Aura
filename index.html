@@ -12,15 +12,11 @@
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Aura" />
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Google Fonts -->
     <link
@@ -63,19 +59,6 @@
         color: #292524;
         -webkit-tap-highlight-color: transparent;
       }
-      .chart-container {
-        position: relative;
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
-        height: 300px;
-        max-height: 400px;
-      }
-      @media (min-width: 768px) {
-        .chart-container {
-          height: 350px;
-        }
-      }
       .no-scrollbar::-webkit-scrollbar {
         display: none;
       }
@@ -96,15 +79,12 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- Install Button -->
         <button
           id="install-btn"
           class="hidden text-xs font-bold text-white bg-brand-500 px-3 py-1.5 rounded-full shadow-sm hover:bg-brand-600 transition-colors flex items-center gap-1"
         >
           Install
         </button>
-
-        <!-- Connectivity Indicator -->
         <div
           id="status-indicator"
           class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors bg-neutral-100 text-neutral-500"
@@ -191,18 +171,6 @@
             </div>
           </div>
         </div>
-
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <h3
-            class="font-semibold text-neutral-800 mb-4 flex items-center gap-2"
-          >
-            <span>📊</span> Cycle Trends
-          </h3>
-          <div class="chart-container"><canvas id="cycleChart"></canvas></div>
-          <p class="text-xs text-center text-neutral-400 mt-2">
-            Based on last 6 months of data
-          </p>
-        </div>
       </div>
 
       <!-- VIEW 2: LIST VIEW -->
@@ -215,21 +183,13 @@
             All recorded events in chronological order.
           </p>
         </div>
-
-        <div id="list-container" class="space-y-3 pb-safe">
-          <!-- JS will populate this -->
-          <div class="text-center py-10 text-neutral-400 text-sm">
-            No logs found yet.
-          </div>
-        </div>
+        <div id="list-container" class="space-y-3 pb-safe"></div>
       </div>
 
       <!-- VIEW 3: SETTINGS -->
       <div id="view-settings" class="hidden space-y-6">
         <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
           <h3 class="font-bold text-neutral-800 mb-2">App Info</h3>
-
-          <!-- Version Info -->
           <div
             class="flex justify-between items-center p-3 bg-neutral-50 rounded-lg"
           >
@@ -240,8 +200,6 @@
               >...</span
             >
           </div>
-
-          <!-- Update Status Info -->
           <div class="flex flex-col gap-2 p-3 bg-neutral-50 rounded-lg mt-1">
             <div class="flex justify-between items-center">
               <span class="text-sm text-neutral-600">Update Status</span>
@@ -255,12 +213,29 @@
             <span
               id="update-status-display"
               class="text-xs font-mono text-neutral-500 break-words bg-white p-2 rounded border border-neutral-200"
+              >Idle</span
             >
-              Idle
-            </span>
           </div>
 
+          <h3 class="font-bold text-neutral-800 mb-2 mt-6">Configuration</h3>
+          <button
+            onclick="app.openCustomization()"
+            class="w-full flex items-center justify-between p-3 bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-700 rounded-lg transition-colors shadow-sm"
+          >
+            <span class="flex items-center gap-2"
+              ><span>✏️</span> Customize Options</span
+            ><span class="text-lg">›</span>
+          </button>
+
           <h3 class="font-bold text-neutral-800 mb-2 mt-6">Data Management</h3>
+          <button
+            onclick="app.generateTestData()"
+            class="w-full flex items-center justify-between p-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors border border-indigo-200"
+          >
+            <span class="flex items-center gap-2"
+              ><span>🧪</span> Generate Demo Data</span
+            ><span class="text-lg">›</span>
+          </button>
           <button
             onclick="app.exportData()"
             class="w-full flex items-center justify-between p-3 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg transition-colors"
@@ -308,6 +283,104 @@
           ></pre>
         </div>
       </div>
+
+      <!-- VIEW 4: CUSTOMIZATION -->
+      <div id="view-customization" class="hidden space-y-6">
+        <div
+          class="bg-white p-4 rounded-xl shadow-sm border border-neutral-100 flex justify-between items-center"
+        >
+          <div>
+            <h2 class="text-lg font-bold text-neutral-800">Customize</h2>
+            <p class="text-xs text-neutral-500">
+              Add or remove tracking options.
+            </p>
+          </div>
+          <button
+            onclick="app.switchView('view-settings')"
+            class="text-sm font-bold text-brand-600 px-3 py-1 bg-brand-50 rounded-lg"
+          >
+            Done
+          </button>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3
+            class="font-bold text-neutral-800 mb-3 text-sm uppercase tracking-wide"
+          >
+            Flow Options
+          </h3>
+          <div id="config-flow-list" class="space-y-2 mb-4"></div>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="add-flow-input"
+              placeholder="Name"
+              class="flex-1 text-sm p-2 border border-neutral-200 rounded-lg"
+            />
+            <input
+              type="text"
+              id="add-flow-icon"
+              placeholder="💧"
+              class="w-12 text-center text-sm p-2 border border-neutral-200 rounded-lg"
+            />
+            <button
+              onclick="app.addOption('flow')"
+              class="bg-neutral-800 text-white px-3 rounded-lg text-lg"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3
+            class="font-bold text-neutral-800 mb-3 text-sm uppercase tracking-wide"
+          >
+            Mood Options
+          </h3>
+          <div id="config-mood-list" class="space-y-2 mb-4"></div>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="add-mood-input"
+              placeholder="Name"
+              class="flex-1 text-sm p-2 border border-neutral-200 rounded-lg"
+            />
+            <input
+              type="text"
+              id="add-mood-icon"
+              placeholder="😎"
+              class="w-12 text-center text-sm p-2 border border-neutral-200 rounded-lg"
+            />
+            <button
+              onclick="app.addOption('mood')"
+              class="bg-neutral-800 text-white px-3 rounded-lg text-lg"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3
+            class="font-bold text-neutral-800 mb-3 text-sm uppercase tracking-wide"
+          >
+            Symptoms
+          </h3>
+          <div id="config-symptom-list" class="space-y-2 mb-4"></div>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="add-symptom-input"
+              placeholder="Name"
+              class="flex-1 text-sm p-2 border border-neutral-200 rounded-lg"
+            />
+            <button
+              onclick="app.addOption('symptom')"
+              class="bg-neutral-800 text-white px-3 rounded-lg text-lg"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- Logging Modal -->
@@ -337,70 +410,17 @@
               class="text-xs font-bold text-neutral-500 uppercase tracking-wide"
               >Flow Intensity</label
             >
-            <div class="grid grid-cols-4 gap-2">
-              <button
-                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
-                data-value="spotting"
-              >
-                <span class="block text-lg mb-1">💧</span>Spot
-              </button>
-              <button
-                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
-                data-value="light"
-              >
-                <span class="block text-lg mb-1">💧💧</span>Light
-              </button>
-              <button
-                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
-                data-value="medium"
-              >
-                <span class="block text-lg mb-1">🩸</span>Med
-              </button>
-              <button
-                class="flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
-                data-value="heavy"
-              >
-                <span class="block text-lg mb-1">🌊</span>Heavy
-              </button>
-            </div>
+            <div class="grid grid-cols-4 gap-2" id="modal-flow-options"></div>
           </div>
           <div class="space-y-2">
             <label
               class="text-xs font-bold text-neutral-500 uppercase tracking-wide"
-              >Mood</label
+              >Mood (Multi-Select)</label
             >
-            <div class="flex justify-between bg-neutral-50 p-2 rounded-xl">
-              <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
-                data-value="happy"
-              >
-                😊
-              </button>
-              <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
-                data-value="neutral"
-              >
-                😐
-              </button>
-              <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
-                data-value="sad"
-              >
-                😢
-              </button>
-              <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
-                data-value="irritable"
-              >
-                😠
-              </button>
-              <button
-                class="mood-btn text-2xl p-2 rounded-full hover:bg-white opacity-50"
-                data-value="tired"
-              >
-                😴
-              </button>
-            </div>
+            <div
+              class="flex flex-wrap gap-2 justify-center bg-neutral-50 p-2 rounded-xl"
+              id="modal-mood-options"
+            ></div>
           </div>
           <div class="space-y-2">
             <label
@@ -427,6 +447,7 @@
 
     <!-- Bottom Navigation -->
     <nav
+      id="bottom-nav"
       class="fixed bottom-0 left-0 w-full bg-white border-t border-neutral-200 pb-safe z-40"
     >
       <div class="flex justify-around items-center h-16 max-w-lg mx-auto">
@@ -455,11 +476,9 @@
     </nav>
 
     <script>
-      // --- CONFIGURATION ---
-      const UI_VERSION = "v1.3.7";
-      // ---------------------
+      const UI_VERSION = "v2.0.3";
 
-      // --- CONNECTIVITY ---
+      // --- CONNECTIVITY & SW UPDATES (Standard) ---
       function updateConnectionStatus() {
         const statusEl = document.getElementById("status-indicator");
         const dotEl = document.getElementById("status-dot");
@@ -479,9 +498,7 @@
       window.addEventListener("online", updateConnectionStatus);
       window.addEventListener("offline", updateConnectionStatus);
 
-      // --- PWA UPDATES ---
       let newWorker = null;
-
       function handleUpdateReady(worker) {
         newWorker = worker;
         document.getElementById("update-toast").classList.remove("hidden");
@@ -489,33 +506,17 @@
         statusText.textContent = "Update Ready";
         statusText.className =
           "text-xs font-mono text-brand-600 font-bold break-words bg-brand-50 p-2 rounded border border-brand-100";
-
         const btn = document.getElementById("manual-restart-btn");
         btn.textContent = "Apply Update";
         btn.classList.add("bg-green-600", "hover:bg-green-700");
       }
-
-      // Trigger Logic
       const triggerRestart = () => {
-        if (newWorker) {
-          newWorker.postMessage({ type: "SKIP_WAITING" });
-        } else {
-          if (
-            confirm(
-              "Force update? This will reload the app and check for the latest version."
-            )
-          ) {
-            navigator.serviceWorker.getRegistration().then((reg) => {
-              if (reg) {
-                reg.unregister().then(() => {
-                  window.location.reload();
-                });
-              } else {
-                window.location.reload();
-              }
-            });
-          }
-        }
+        if (newWorker) newWorker.postMessage({ type: "SKIP_WAITING" });
+        else if (confirm("Force update? This will reload the app."))
+          navigator.serviceWorker.getRegistration().then((reg) => {
+            if (reg) reg.unregister().then(() => window.location.reload());
+            else window.location.reload();
+          });
       };
       document
         .getElementById("update-btn")
@@ -524,17 +525,15 @@
         .getElementById("manual-restart-btn")
         .addEventListener("click", triggerRestart);
 
-      // Version Fetcher
       function fetchVersion() {
-        const handleVersion = (v) => {
-          document.getElementById("app-version-display").textContent = v;
-        };
-
+        const handleVersion = (v) =>
+          (document.getElementById("app-version-display").textContent = v);
         if (navigator.serviceWorker.controller) {
           const messageChannel = new MessageChannel();
-          const timeout = setTimeout(() => {
-            handleVersion(UI_VERSION + " (Timeout)");
-          }, 1000);
+          const timeout = setTimeout(
+            () => handleVersion(UI_VERSION + " (Timeout)"),
+            1000
+          );
           messageChannel.port1.onmessage = (event) => {
             clearTimeout(timeout);
             handleVersion(event.data);
@@ -543,86 +542,60 @@
             { type: "GET_VERSION" },
             [messageChannel.port2]
           );
-        } else {
-          handleVersion(UI_VERSION + " (No Controller)");
-          navigator.serviceWorker.ready.then((reg) => {
-            if (reg.active) {
-              const messageChannel = new MessageChannel();
-              messageChannel.port1.onmessage = (event) =>
-                handleVersion(event.data + " (Uncontrolled)");
-              reg.active.postMessage({ type: "GET_VERSION" }, [
-                messageChannel.port2,
-              ]);
-            }
-          });
-        }
+        } else handleVersion(UI_VERSION + " (No Controller)");
       }
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          // FIXED: Explicit pathing './sw.js' and scope './'
           const swUrl = new URL("sw.js", window.location.href).href;
-          console.log("Registering SW at:", swUrl);
-
           navigator.serviceWorker
             .register(swUrl, { scope: "./" })
             .then((reg) => {
               document.getElementById("update-status-display").textContent =
                 "Checking...";
-
               reg
                 .update()
                 .then(() => {
-                  if (!reg.waiting && !reg.installing) {
+                  if (!reg.waiting && !reg.installing)
                     document.getElementById(
                       "update-status-display"
                     ).textContent = "Up to date";
-                  }
                 })
-                .catch((err) => {
-                  console.warn("Update check failed", err);
-                  document.getElementById("update-status-display").textContent =
-                    "Fail: " + err.message;
-                });
-
+                .catch(
+                  (err) =>
+                    (document.getElementById(
+                      "update-status-display"
+                    ).textContent = "Fail: " + err.message)
+                );
               if (reg.waiting) handleUpdateReady(reg.waiting);
-
               reg.addEventListener("updatefound", () => {
                 document.getElementById("update-status-display").textContent =
                   "Downloading...";
                 const installingWorker = reg.installing;
                 installingWorker.addEventListener("statechange", () => {
-                  if (installingWorker.state === "installed") {
+                  if (installingWorker.state === "installed")
                     handleUpdateReady(installingWorker);
-                  }
-                  if (installingWorker.state === "redundant") {
+                  if (installingWorker.state === "redundant")
                     document.getElementById(
                       "update-status-display"
                     ).textContent = "Failed (Redundant)";
-                  }
                 });
               });
-
               fetchVersion();
             })
             .catch((err) => {
               console.error("SW Reg Failed", err);
-              document.getElementById("update-status-display").textContent =
-                "Reg Fail: " + err.message;
               fetchVersion();
             });
-
-          navigator.serviceWorker.addEventListener("controllerchange", () => {
-            window.location.reload();
-          });
+          navigator.serviceWorker.addEventListener("controllerchange", () =>
+            window.location.reload()
+          );
         });
       }
 
-      // PWA INSTALL
       let deferredPrompt;
       const installBtn = document.getElementById("install-btn");
       window.addEventListener("beforeinstallprompt", (e) => {
-        // e.preventDefault(); // Removed to allow native banner
         deferredPrompt = e;
         installBtn.classList.remove("hidden");
       });
@@ -633,19 +606,14 @@
         installBtn.classList.add("hidden");
       });
 
-      // APP LOGIC
+      // --- CORE APP LOGIC ---
       const app = {
         data: {
           userSettings: {
             averageCycleLength: 28,
-            customSymptoms: [
-              "Cramps",
-              "Headache",
-              "Bloating",
-              "Acne",
-              "Cravings",
-              "Backache",
-            ],
+            flowOptions: [],
+            moodOptions: [],
+            symptomOptions: [],
           },
           entries: {},
         },
@@ -654,7 +622,6 @@
           selectedDateStr: null,
           view: "view-prototype",
         },
-        chartInstance: null,
 
         init() {
           updateConnectionStatus();
@@ -666,6 +633,66 @@
             try {
               this.data = JSON.parse(saved);
             } catch (e) {}
+
+          // MIGRATION & DEFAULTS
+          if (
+            !this.data.userSettings.flowOptions ||
+            this.data.userSettings.flowOptions.length === 0
+          ) {
+            this.data.userSettings.flowOptions = [
+              { value: "spotting", label: "Spotting", icon: "💧" },
+              { value: "light", label: "Light", icon: "💧💧" },
+              { value: "medium", label: "Medium", icon: "🩸" },
+              { value: "heavy", label: "Heavy", icon: "🌊" },
+              { value: "vheavy", label: "V. Heavy", icon: "🌋" },
+              { value: "clots", label: "Clots", icon: "🛑" },
+            ];
+          }
+          if (
+            !this.data.userSettings.moodOptions ||
+            this.data.userSettings.moodOptions.length === 0
+          ) {
+            this.data.userSettings.moodOptions = [
+              { value: "happy", label: "Happy", icon: "😊" },
+              { value: "neutral", label: "Neutral", icon: "😐" },
+              { value: "sad", label: "Sad", icon: "😢" },
+              { value: "irritable", label: "Irritable", icon: "😠" },
+              { value: "tired", label: "Tired", icon: "😴" },
+              { value: "anxious", label: "Anxious", icon: "😰" },
+              { value: "energetic", label: "Energetic", icon: "⚡" },
+              { value: "romantic", label: "Romantic", icon: "🥰" },
+              { value: "confident", label: "Confident", icon: "😎" },
+              { value: "emotional", label: "Emotional", icon: "😭" },
+            ];
+          }
+          if (
+            !this.data.userSettings.symptomOptions ||
+            this.data.userSettings.symptomOptions.length === 0
+          ) {
+            this.data.userSettings.symptomOptions = [
+              "Cramps",
+              "Headache",
+              "Bloating",
+              "Acne",
+              "Cravings",
+              "Backache",
+              "Nausea",
+              "Fatigue",
+              "Insomnia",
+              "Breast Tenderness",
+              "Ovulation Pain",
+              "Migraine",
+              "Diarrhea",
+              "Constipation",
+            ];
+          }
+
+          Object.keys(this.data.entries).forEach((date) => {
+            const entry = this.data.entries[date];
+            if (entry.mood && typeof entry.mood === "string") {
+              entry.mood = [entry.mood];
+            }
+          });
 
           document
             .querySelectorAll(".nav-btn")
@@ -691,36 +718,49 @@
               this.renderCalendar();
             });
 
-          this.renderSymptomChips();
           this.setupFlowListeners();
           this.renderCalendar();
-          this.updateStats();
           this.renderListView();
           this.renderJSONViewer();
         },
 
-        // --- DATE HELPER (NEW) ---
         parseLocal(dateStr) {
           if (!dateStr) return new Date();
           const [y, m, d] = dateStr.split("-").map(Number);
-          return new Date(y, m - 1, d); // Construct date in local time
+          return new Date(y, m - 1, d);
         },
-        // ------------------------
 
         switchView(viewId, btn) {
-          ["view-prototype", "view-list", "view-settings"].forEach((id) =>
+          [
+            "view-prototype",
+            "view-list",
+            "view-settings",
+            "view-customization",
+          ].forEach((id) =>
             document.getElementById(id).classList.add("hidden")
           );
           document.getElementById(viewId).classList.remove("hidden");
-          document.querySelectorAll(".nav-btn").forEach((b) => {
-            b.classList.remove("text-brand-500");
-            b.classList.add("text-neutral-400");
-          });
-          btn.classList.remove("text-neutral-400");
-          btn.classList.add("text-brand-500");
+
+          const nav = document.getElementById("bottom-nav");
+          if (viewId === "view-customization") nav.classList.add("hidden");
+          else nav.classList.remove("hidden");
+
+          if (btn) {
+            document.querySelectorAll(".nav-btn").forEach((b) => {
+              b.classList.remove("text-brand-500");
+              b.classList.add("text-neutral-400");
+            });
+            btn.classList.remove("text-neutral-400");
+            btn.classList.add("text-brand-500");
+          }
+
           if (viewId === "view-settings") this.renderJSONViewer();
-          if (viewId === "view-prototype") this.updateStats();
           if (viewId === "view-list") this.renderListView();
+        },
+
+        openCustomization() {
+          this.renderCustomizationList();
+          this.switchView("view-customization");
         },
 
         saveData() {
@@ -730,6 +770,192 @@
           );
           this.renderListView();
           this.renderJSONViewer();
+        },
+
+        generateTestData() {
+          if (
+            !confirm(
+              "⚠️ This will overwrite existing data with 3 months of test history. Continue?"
+            )
+          )
+            return;
+
+          this.data.entries = {};
+          const today = new Date();
+          const flowSequence = ["medium", "heavy", "heavy", "medium", "light"];
+
+          for (let i = 90; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const dateStr = d.toISOString().split("T")[0];
+            const cycleDay = (i + 5) % 28;
+            let entry = {};
+            if (cycleDay < 5) {
+              entry.flow = flowSequence[cycleDay];
+              entry.symptoms = ["Cramps", "Fatigue"];
+              entry.mood = ["tired"];
+            } else if (Math.random() > 0.7) {
+              if (Math.random() > 0.5) entry.mood = ["happy"];
+              if (Math.random() > 0.8) entry.symptoms = ["Headache"];
+            }
+            if (Object.keys(entry).length > 0) {
+              this.data.entries[dateStr] = entry;
+            }
+          }
+          this.saveData();
+          this.init();
+          alert("Demo data generated!");
+        },
+
+        renderLogModalOptions() {
+          const flowContainer = document.getElementById("modal-flow-options");
+          flowContainer.innerHTML = "";
+          this.data.userSettings.flowOptions.forEach((opt) => {
+            const btn = document.createElement("button");
+            btn.className =
+              "flow-btn p-2 rounded-lg border border-neutral-200 text-center text-sm hover:bg-brand-50 focus:ring-2 focus:ring-brand-500 transition-all";
+            btn.dataset.value = opt.value;
+            btn.innerHTML = `<span class="block text-lg mb-1">${opt.icon}</span>${opt.label}`;
+            btn.onclick = () => {
+              document
+                .querySelectorAll(".flow-btn")
+                .forEach((b) =>
+                  b.classList.remove(
+                    "ring-2",
+                    "ring-brand-500",
+                    "border-brand-500",
+                    "bg-brand-50"
+                  )
+                );
+              if (
+                this.data.entries[this.state.selectedDateStr]?.flow ===
+                opt.value
+              ) {
+                delete this.data.entries[this.state.selectedDateStr].flow;
+              } else {
+                btn.classList.add(
+                  "ring-2",
+                  "ring-brand-500",
+                  "border-brand-500",
+                  "bg-brand-50"
+                );
+              }
+            };
+            flowContainer.appendChild(btn);
+          });
+
+          const moodContainer = document.getElementById("modal-mood-options");
+          moodContainer.innerHTML = "";
+          this.data.userSettings.moodOptions.forEach((opt) => {
+            const btn = document.createElement("button");
+            btn.className =
+              "mood-btn text-2xl p-2 rounded-full hover:bg-white transition-colors opacity-50";
+            btn.dataset.value = opt.value;
+            btn.textContent = opt.icon;
+            btn.onclick = () => {
+              if (btn.classList.contains("opacity-100")) {
+                btn.classList.remove("opacity-100", "bg-white", "shadow-sm");
+                btn.classList.add("opacity-50");
+              } else {
+                btn.classList.remove("opacity-50");
+                btn.classList.add("opacity-100", "bg-white", "shadow-sm");
+              }
+            };
+            moodContainer.appendChild(btn);
+          });
+
+          const sympContainer = document.getElementById("symptom-chips");
+          sympContainer.innerHTML = "";
+          this.data.userSettings.symptomOptions.forEach((sym) => {
+            const btn = document.createElement("button");
+            btn.className =
+              "symptom-chip px-3 py-1.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-600 transition-colors border border-transparent";
+            btn.textContent = sym;
+            btn.dataset.value = sym;
+            btn.onclick = () => {
+              if (btn.classList.contains("bg-neutral-800")) {
+                btn.classList.remove("bg-neutral-800", "text-white");
+                btn.classList.add("bg-neutral-100", "text-neutral-600");
+              } else {
+                btn.classList.remove("bg-neutral-100", "text-neutral-600");
+                btn.classList.add("bg-neutral-800", "text-white");
+              }
+            };
+            sympContainer.appendChild(btn);
+          });
+        },
+
+        renderCustomizationList() {
+          const createList = (id, items, type) => {
+            const el = document.getElementById(id);
+            el.innerHTML = "";
+            items.forEach((item, index) => {
+              const div = document.createElement("div");
+              div.className =
+                "flex justify-between items-center bg-neutral-50 p-2 rounded-lg border border-neutral-100";
+              const label =
+                typeof item === "string" ? item : `${item.icon} ${item.label}`;
+              div.innerHTML = `<span class="text-sm text-neutral-700">${label}</span>`;
+              const del = document.createElement("button");
+              del.textContent = "✕";
+              del.className =
+                "text-neutral-400 hover:text-red-500 font-bold px-2";
+              del.onclick = () => this.removeOption(type, index);
+              div.appendChild(del);
+              el.appendChild(div);
+            });
+          };
+          createList(
+            "config-flow-list",
+            this.data.userSettings.flowOptions,
+            "flow"
+          );
+          createList(
+            "config-mood-list",
+            this.data.userSettings.moodOptions,
+            "mood"
+          );
+          createList(
+            "config-symptom-list",
+            this.data.userSettings.symptomOptions,
+            "symptom"
+          );
+        },
+
+        addOption(type) {
+          const inputId = `add-${type}-input`;
+          const iconId = `add-${type}-icon`;
+          const label = document.getElementById(inputId).value.trim();
+          const icon = document.getElementById(iconId)
+            ? document.getElementById(iconId).value.trim()
+            : null;
+
+          if (!label) return;
+
+          if (type === "symptom") {
+            this.data.userSettings.symptomOptions.push(label);
+          } else {
+            const value = label.toLowerCase().replace(/\s+/g, "");
+            const newOpt = { value, label, icon: icon || "•" };
+            this.data.userSettings[`${type}Options`].push(newOpt);
+          }
+
+          document.getElementById(inputId).value = "";
+          if (document.getElementById(iconId))
+            document.getElementById(iconId).value = "";
+
+          this.saveData();
+          this.renderCustomizationList();
+        },
+
+        removeOption(type, index) {
+          if (confirm("Remove this option?")) {
+            if (type === "symptom")
+              this.data.userSettings.symptomOptions.splice(index, 1);
+            else this.data.userSettings[`${type}Options`].splice(index, 1);
+            this.saveData();
+            this.renderCustomizationList();
+          }
         },
 
         renderCalendar() {
@@ -795,8 +1021,9 @@
                 "border-dashed"
               );
             }
-            if (entry && entry.mood)
+            if (entry && entry.mood && entry.mood.length > 0) {
               dayEl.innerHTML += `<span class="absolute bottom-1 w-1 h-1 rounded-full bg-yellow-400"></span>`;
+            }
             grid.appendChild(dayEl);
           }
         },
@@ -810,30 +1037,11 @@
               '<div class="text-center py-10 text-neutral-400 text-sm">No logs found. Tap a date on the calendar to start.</div>';
             return;
           }
-          const moodMap = {
-            happy: "😊",
-            neutral: "😐",
-            sad: "😢",
-            irritable: "😠",
-            tired: "😴",
-          };
-          const flowMap = {
-            spotting: "Spotting 💧",
-            light: "Light 💧💧",
-            medium: "Medium 🩸",
-            heavy: "Heavy 🌊",
-          };
 
           dates.forEach((dateStr) => {
             const entry = this.data.entries[dateStr];
             if (!entry) return;
-
-            // FIXED: Use ParseLocal
             const dateObj = this.parseLocal(dateStr);
-
-            const dayName = dateObj.toLocaleDateString("en-US", {
-              weekday: "short",
-            });
             const dayNum = dateObj.getDate();
             const month = dateObj.toLocaleDateString("en-US", {
               month: "short",
@@ -854,20 +1062,30 @@
             const contentBox = document.createElement("div");
             contentBox.className = "flex-grow space-y-1";
             const topRow = document.createElement("div");
-            topRow.className = "flex items-center gap-2";
+            topRow.className = "flex items-center gap-2 flex-wrap";
 
             if (entry.flow) {
+              const flowOpt = this.data.userSettings.flowOptions.find(
+                (o) => o.value === entry.flow
+              );
               const flowBadge = document.createElement("span");
               flowBadge.className =
                 "text-xs font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full";
-              flowBadge.textContent = flowMap[entry.flow] || entry.flow;
+              flowBadge.textContent = flowOpt
+                ? `${flowOpt.label} ${flowOpt.icon}`
+                : entry.flow;
               topRow.appendChild(flowBadge);
             }
 
-            if (entry.mood) {
-              const moodBadge = document.createElement("span");
-              moodBadge.textContent = moodMap[entry.mood] || "";
-              topRow.appendChild(moodBadge);
+            if (entry.mood && Array.isArray(entry.mood)) {
+              entry.mood.forEach((mVal) => {
+                const moodOpt = this.data.userSettings.moodOptions.find(
+                  (o) => o.value === mVal
+                );
+                const moodBadge = document.createElement("span");
+                moodBadge.textContent = moodOpt ? moodOpt.icon : mVal;
+                topRow.appendChild(moodBadge);
+              });
             }
             contentBox.appendChild(topRow);
 
@@ -929,44 +1147,50 @@
         openLog(dateStr) {
           this.state.selectedDateStr = dateStr;
           const modal = document.getElementById("log-modal");
-          const panel = document.getElementById("modal-panel"); // Target inner card
+          const panel = document.getElementById("modal-panel");
           const entry = this.data.entries[dateStr] || {};
 
-          // FIXED: Use ParseLocal
           document.getElementById("modal-date-label").textContent =
             this.parseLocal(dateStr).toDateString();
 
-          document.querySelectorAll(".flow-btn").forEach((b) => {
-            b.classList.remove(
-              "ring-2",
-              "ring-brand-500",
-              "border-brand-500",
-              "bg-brand-50"
+          this.renderLogModalOptions(); // Clean slate
+
+          if (entry.flow) {
+            const btn = document.querySelector(
+              `.flow-btn[data-value="${entry.flow}"]`
             );
-            if (b.dataset.value === entry.flow)
-              b.classList.add(
+            if (btn)
+              btn.classList.add(
                 "ring-2",
                 "ring-brand-500",
                 "border-brand-500",
                 "bg-brand-50"
               );
-          });
-          document.querySelectorAll(".mood-btn").forEach((b) => {
-            b.classList.remove("opacity-100", "bg-white", "shadow-sm");
-            b.classList.add("opacity-50");
-            if (b.dataset.value === entry.mood) {
-              b.classList.remove("opacity-50");
-              b.classList.add("opacity-100", "bg-white", "shadow-sm");
-            }
-          });
-          document.querySelectorAll(".symptom-chip").forEach((c) => {
-            c.classList.remove("bg-neutral-800", "text-white");
-            c.classList.add("bg-neutral-100", "text-neutral-600");
-            if (entry.symptoms && entry.symptoms.includes(c.dataset.value)) {
-              c.classList.remove("bg-neutral-100", "text-neutral-600");
-              c.classList.add("bg-neutral-800", "text-white");
-            }
-          });
+          }
+
+          if (entry.mood && Array.isArray(entry.mood)) {
+            entry.mood.forEach((mVal) => {
+              const btn = document.querySelector(
+                `.mood-btn[data-value="${mVal}"]`
+              );
+              if (btn) {
+                btn.classList.remove("opacity-50");
+                btn.classList.add("opacity-100", "bg-white", "shadow-sm");
+              }
+            });
+          }
+
+          if (entry.symptoms) {
+            entry.symptoms.forEach((sym) => {
+              const btn = document.querySelector(
+                `.symptom-chip[data-value="${sym}"]`
+              );
+              if (btn) {
+                btn.classList.remove("bg-neutral-100", "text-neutral-600");
+                btn.classList.add("bg-neutral-800", "text-white");
+              }
+            });
+          }
 
           modal.classList.remove("hidden", "pointer-events-none");
           setTimeout(() => modal.classList.remove("opacity-0"), 10);
@@ -987,24 +1211,25 @@
         saveEntry() {
           const flow =
             document.querySelector(".flow-btn.ring-2")?.dataset.value || null;
-          const mood =
-            document.querySelector(".mood-btn.opacity-100")?.dataset.value ||
-            null;
+          const moods = Array.from(
+            document.querySelectorAll(".mood-btn.opacity-100")
+          ).map((b) => b.dataset.value);
           const symptoms = Array.from(
             document.querySelectorAll(".symptom-chip.bg-neutral-800")
           ).map((c) => c.dataset.value);
-          if (!flow && !mood && symptoms.length === 0)
+
+          if (!flow && moods.length === 0 && symptoms.length === 0) {
             delete this.data.entries[this.state.selectedDateStr];
-          else
+          } else {
             this.data.entries[this.state.selectedDateStr] = {
               flow,
-              mood,
+              mood: moods,
               symptoms,
             };
+          }
           this.saveData();
           this.closeModal();
           this.renderCalendar();
-          this.updateStats();
         },
 
         deleteEntry() {
@@ -1012,124 +1237,18 @@
           this.saveData();
           this.closeModal();
           this.renderCalendar();
-          this.updateStats();
         },
 
         renderSymptomChips() {
-          const container = document.getElementById("symptom-chips");
-          container.innerHTML = "";
-          this.data.userSettings.customSymptoms.forEach((sym) => {
-            const btn = document.createElement("button");
-            btn.className =
-              "symptom-chip px-3 py-1.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-600 transition-colors border border-transparent";
-            btn.textContent = sym;
-            btn.dataset.value = sym;
-            btn.onclick = () => {
-              if (btn.classList.contains("bg-neutral-800")) {
-                btn.classList.remove("bg-neutral-800", "text-white");
-                btn.classList.add("bg-neutral-100", "text-neutral-600");
-              } else {
-                btn.classList.remove("bg-neutral-100", "text-neutral-600");
-                btn.classList.add("bg-neutral-800", "text-white");
-              }
-            };
-            container.appendChild(btn);
-          });
+          /* moved */
         },
-
         setupFlowListeners() {
-          document.querySelectorAll(".flow-btn").forEach(
-            (btn) =>
-              (btn.onclick = () => {
-                document
-                  .querySelectorAll(".flow-btn")
-                  .forEach((b) =>
-                    b.classList.remove(
-                      "ring-2",
-                      "ring-brand-500",
-                      "border-brand-500",
-                      "bg-brand-50"
-                    )
-                  );
-                btn.classList.add(
-                  "ring-2",
-                  "ring-brand-500",
-                  "border-brand-500",
-                  "bg-brand-50"
-                );
-              })
-          );
-          document.querySelectorAll(".mood-btn").forEach(
-            (btn) =>
-              (btn.onclick = () => {
-                document.querySelectorAll(".mood-btn").forEach((b) => {
-                  b.classList.remove("opacity-100", "bg-white", "shadow-sm");
-                  b.classList.add("opacity-50");
-                });
-                btn.classList.remove("opacity-50");
-                btn.classList.add("opacity-100", "bg-white", "shadow-sm");
-              })
-          );
+          /* moved */
         },
-
         updateStats() {
-          const dates = Object.keys(this.data.entries).sort();
-          const starts = [];
-          let lastDate = null;
-          dates.forEach((d) => {
-            const entry = this.data.entries[d];
-            if (!entry.flow) return;
-            const dateObj = new Date(d);
-            if (!lastDate || (dateObj - lastDate) / (1000 * 60 * 60 * 24) > 10)
-              starts.push(d);
-            lastDate = dateObj;
-          });
-          const lengths = [],
-            labels = [];
-          if (starts.length >= 2) {
-            for (let i = 1; i < starts.length; i++) {
-              const diff = Math.round(
-                (new Date(starts[i]) - new Date(starts[i - 1])) /
-                  (1000 * 60 * 60 * 24)
-              );
-              if (diff < 50) {
-                lengths.push(diff);
-
-                // FIXED: Use ParseLocal
-                const labelDate = this.parseLocal(starts[i - 1]);
-                labels.push(
-                  labelDate.toLocaleString("default", { month: "short" })
-                );
-              }
-            }
-          }
-          const ctx = document.getElementById("cycleChart").getContext("2d");
-          if (this.chartInstance) this.chartInstance.destroy();
-          this.chartInstance = new Chart(ctx, {
-            type: "bar",
-            data: {
-              labels: lengths.length ? labels : ["No Data"],
-              datasets: [
-                {
-                  label: "Days",
-                  data: lengths.length ? lengths : [28],
-                  backgroundColor: "#fb7185",
-                  borderRadius: 6,
-                  maxBarThickness: 40,
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: { legend: { display: false } },
-              scales: {
-                y: { display: false },
-                x: { grid: { display: false } },
-              },
-            },
-          });
+          /* removed */
         },
+
         renderJSONViewer() {
           document.getElementById("json-viewer").textContent = JSON.stringify(
             this.data,
@@ -1139,18 +1258,18 @@
         },
         exportData() {
           const now = new Date();
-          const y = now.getFullYear();
-          const m = String(now.getMonth() + 1).padStart(2, "0");
-          const d = String(now.getDate()).padStart(2, "0");
-          const h = String(now.getHours()).padStart(2, "0");
-          const min = String(now.getMinutes()).padStart(2, "0");
-          const s = String(now.getSeconds()).padStart(2, "0");
-          const fileName = `Aura_Data_${y}-${m}-${d}_${h}-${min}-${s}.json`;
-
+          const fileName = `Aura_Data_${now.getFullYear()}-${String(
+            now.getMonth() + 1
+          ).padStart(2, "0")}-${String(now.getDate()).padStart(
+            2,
+            "0"
+          )}_${String(now.getHours()).padStart(2, "0")}-${String(
+            now.getMinutes()
+          ).padStart(2, "0")}.json`;
           const a = document.createElement("a");
           a.href =
             "data:text/json;charset=utf-8," +
-            encodeURIComponent(JSON.stringify(this.data, null, 2)); // Added pretty print for better UX
+            encodeURIComponent(JSON.stringify(this.data, null, 2));
           a.download = fileName;
           document.body.appendChild(a);
           a.click();
