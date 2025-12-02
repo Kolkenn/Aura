@@ -266,7 +266,7 @@
             class="w-full flex items-center justify-between p-3 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg transition-colors"
           >
             <span class="flex items-center gap-2"
-              ><span>📥</span> Export Backup (JSON)</span
+              ><span>📤</span> Export Data</span
             ><span class="text-lg">›</span>
           </button>
           <div class="relative w-full">
@@ -282,7 +282,7 @@
               class="w-full flex items-center justify-between p-3 bg-neutral-50 hover:bg-neutral-100 text-neutral-700 rounded-lg transition-colors"
             >
               <span class="flex items-center gap-2"
-                ><span>📤</span> Import Backup</span
+                ><span>📥</span> Import Data</span
               ><span class="text-lg">›</span>
             </button>
           </div>
@@ -456,7 +456,7 @@
 
     <script>
       // --- CONFIGURATION ---
-      const UI_VERSION = "v1.3.6";
+      const UI_VERSION = "v1.3.7";
       // ---------------------
 
       // --- CONNECTIVITY ---
@@ -1138,11 +1138,20 @@
           );
         },
         exportData() {
+          const now = new Date();
+          const y = now.getFullYear();
+          const m = String(now.getMonth() + 1).padStart(2, "0");
+          const d = String(now.getDate()).padStart(2, "0");
+          const h = String(now.getHours()).padStart(2, "0");
+          const min = String(now.getMinutes()).padStart(2, "0");
+          const s = String(now.getSeconds()).padStart(2, "0");
+          const fileName = `Aura_Data_${y}-${m}-${d}_${h}-${min}-${s}.json`;
+
           const a = document.createElement("a");
           a.href =
             "data:text/json;charset=utf-8," +
-            encodeURIComponent(JSON.stringify(this.data));
-          a.download = "backup.json";
+            encodeURIComponent(JSON.stringify(this.data, null, 2)); // Added pretty print for better UX
+          a.download = fileName;
           document.body.appendChild(a);
           a.click();
           a.remove();
