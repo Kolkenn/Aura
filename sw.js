@@ -1,5 +1,5 @@
 // --- CONFIGURATION ---
-const APP_VERSION = "v2.0.4";
+const APP_VERSION = "v2.0.5";
 // ---------------------
 
 const CACHE_NAME = `aura-tracker-${APP_VERSION}`;
